@@ -1,6 +1,6 @@
 'use client'
 
-import { ShieldCheck, User, Info, ExternalLink } from 'lucide-react'
+import { ShieldCheck, User, Info } from 'lucide-react'
 
 interface Props {
   isAdmin: boolean
@@ -27,11 +27,13 @@ export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
           <div className="flex-1">
             <p className="font-display font-semibold text-text">Espace administrateur</p>
             <p className="text-text-muted text-sm">
-              {isAdmin ? 'Connecté en tant qu'admin' : 'Accès réservé'}
+              {isAdmin ? "Connecté en tant qu'admin" : 'Accès réservé'}
             </p>
           </div>
           {isAdmin && (
-            <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full font-medium">Admin</span>
+            <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full font-medium">
+              Admin
+            </span>
           )}
         </button>
 
