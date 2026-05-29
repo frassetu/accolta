@@ -144,7 +144,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
       // Lecture du fichier Excel côté client
       const XLSX = (await import('xlsx')).default
       const buf = await file.arrayBuffer()
-      const wb = XLSX.read(buf)
+      const wb = XLSX.read(buf, { type: 'array' })
       const ws = wb.Sheets[wb.SheetNames[0]]
       const rawRows: any[] = XLSX.utils.sheet_to_json(ws)
 
