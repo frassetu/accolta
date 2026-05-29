@@ -142,7 +142,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
 
     try {
       // Lecture du fichier Excel côté client
-      const XLSX = (await import('xlsx')).default
+      const XLSX = await import('xlsx')
       const buf = await file.arrayBuffer()
       const wb = XLSX.read(buf, { type: 'array' })
       const ws = wb.Sheets[wb.SheetNames[0]]
