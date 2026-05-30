@@ -8,7 +8,10 @@ const supabaseAdmin = createClient(
 
 function checkAdmin(req: NextRequest) {
   const token = req.headers.get('x-admin-token')
-  return token === process.env.ADMIN_SECRET_TOKEN
+  return (
+    token === process.env.ADMIN_SECRET_TOKEN ||
+    token === process.env.NEXT_PUBLIC_ADMIN_PASSWORD
+  )
 }
 
 export async function GET(req: NextRequest) {
@@ -47,46 +50,28 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'import') {
-    // Dédoublonnage côté serveur avant insertion
     const raw: any[] = payload.rows || []
-
-    // Dédoublonner par artiste+titre (garde la dernière occurrence qui a le plus de données)
     const seen = new Map<string, any>()
     for (const row of raw) {
       const key = `${(row.artiste || '').toLowerCase().trim()}|||${(row.titre || '').toLowerCase().trim()}`
       const existing = seen.get(key)
-      // Préfère la version avec paroles
       if (!existing || (!existing.paroles && row.paroles)) {
         seen.set(key, row)
       }
     }
     const rows = Array.from(seen.values())
-
     let inserted = 0
-    let updated = 0
     const errors: string[] = []
-
-    // Upsert par batches de 50 (safe pour Supabase)
     for (let i = 0; i < rows.length; i += 50) {
       const chunk = rows.slice(i, i + 50)
       const { data, error } = await supabaseAdmin
         .from('chansons')
         .upsert(chunk, { onConflict: 'artiste,titre', ignoreDuplicates: false })
         .select('id')
-
-      if (error) {
-        errors.push(`Batch ${Math.floor(i/50)+1}: ${error.message}`)
-      } else {
-        inserted += data?.length || 0
-      }
+      if (error) errors.push(`Batch ${Math.floor(i/50)+1}: ${error.message}`)
+      else inserted += data?.length || 0
     }
-
-    return NextResponse.json({
-      total_in_file: raw.length,
-      after_dedup: rows.length,
-      inserted,
-      errors: errors.slice(0, 5) // max 5 erreurs remontées
-    })
+    return NextResponse.json({ total_in_file: raw.length, after_dedup: rows.length, inserted, errors: errors.slice(0, 5) })
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
