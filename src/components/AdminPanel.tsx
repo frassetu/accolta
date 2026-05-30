@@ -67,10 +67,8 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
 
   const handleLogin = () => {
     if (email.trim() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      // Génère un token de session simple
-      const token = process.env.NEXT_PUBLIC_ADMIN_SESSION_TOKEN ||
-        btoa(`${email}:${password}:${Date.now()}`)
-      sessionStorage.setItem('accolta_admin_token', token)
+      // Stocke le mot de passe comme token — l'API le vérifie côté serveur
+      sessionStorage.setItem('accolta_admin_token', password)
       onLogin()
       setLoginError('')
     } else {
@@ -142,9 +140,9 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
 
     try {
       // Lecture du fichier Excel côté client
-      const XLSX = await import('xlsx')
+      const XLSX = (await import('xlsx')).default
       const buf = await file.arrayBuffer()
-      const wb = XLSX.read(buf, { type: 'array' })
+      const wb = XLSX.read(buf)
       const ws = wb.Sheets[wb.SheetNames[0]]
       const rawRows: any[] = XLSX.utils.sheet_to_json(ws)
 
@@ -382,9 +380,17 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
         {/* ── Ajouter / Modifier ── */}
         {tab === 'add' && (
           <div className="space-y-3 pb-10">
-            <h2 className="font-display font-semibold text-text mb-4">
-              {editSong ? `Modifier "${editSong.titre}"` : 'Nouvelle chanson'}
-            </h2>
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                onClick={() => { setTab('songs'); setEditSong(null); setForm({ artiste: '', album: '', titre: '', annee: '', paroles: '' }) }}
+                className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0"
+              >
+                <ChevronLeft className="w-4 h-4 text-text" />
+              </button>
+              <h2 className="font-display font-semibold text-text">
+                {editSong ? `Modifier "${editSong.titre}"` : 'Nouvelle chanson'}
+              </h2>
+            </div>
             {[
               { key: 'artiste', label: 'Artiste *', placeholder: "Nom de l'artiste" },
               { key: 'titre',   label: 'Titre *',   placeholder: 'Titre de la chanson' },
