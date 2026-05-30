@@ -35,7 +35,16 @@ export default function App() {
   }
 
   if (showAdmin) {
-    return <AdminPanel onClose={() => setShowAdmin(false)} isAdmin={isAdmin} onLogin={() => setIsAdmin(true)} />
+    return (
+      <AdminPanel
+        onClose={() => setShowAdmin(false)}
+        isAdmin={isAdmin}
+        onLogin={() => {
+          setIsAdmin(true)
+          sessionStorage.setItem('accolta_admin', 'true')
+        }}
+      />
+    )
   }
 
   if (selectedSong) {
@@ -57,6 +66,8 @@ export default function App() {
             favorites={favorites}
             onSelectSong={setSelectedSong}
             onToggleFavorite={toggleFavorite}
+            onGoToSearch={() => setActiveTab('search')}
+            onGoToFavorites={() => setActiveTab('favorites')}
           />
         )}
         {activeTab === 'search' && (
