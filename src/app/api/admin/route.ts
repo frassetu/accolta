@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
 
+  // ✅ STATS
   if (searchParams.get('action') === 'stats') {
     const { count: total } = await supabaseAdmin
       .from('chansons')
@@ -39,6 +40,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ total, withLyrics, artists })
   }
 
+  // ✅ ✅ NOUVEAU : EXPORT CSV
+  if (searchParams.get('action') === 'export') {
+    const { data, error } = await supabaseAdmin
+      .from('chansons')
+      .select('*')
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data)
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
 
@@ -49,7 +63,7 @@ export async function POST(req: NextRequest) {
 
   const contentType = req.headers.get('content-type') || ''
 
-  // ✅ IMPORT EXCEL (CORRIGÉ)
+  // ✅ IMPORT EXCEL
   if (contentType.includes('multipart/form-data')) {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
@@ -75,7 +89,7 @@ export async function POST(req: NextRequest) {
         })(),
         paroles: r['Parolle'] || r['paroles'] || r['Paroles'] || null,
       }))
-      .filter((r) => r.artiste && r.titre)
+      .filter((r) => r.artiste && r.titre) // ✅ garde pour éviter données cassées
 
     if (allRows.length === 0) {
       return NextResponse.json(
@@ -84,7 +98,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ✅ ✅ PLUS DE DÉDOUBLONNAGE
     const rows = allRows
 
     let inserted = 0
@@ -93,7 +106,6 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < rows.length; i += 50) {
       const chunk = rows.slice(i, i + 50)
 
-      // ✅ INSERT SIMPLE (plus de conflit)
       const { data, error } = await supabaseAdmin
         .from('chansons')
         .insert(chunk)
@@ -108,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       total_in_file: rawRows.length,
-      after_dedup: rows.length, // maintenant = total
+      after_dedup: rows.length,
       inserted,
       errors: errors.slice(0, 5),
     })
@@ -121,7 +133,7 @@ export async function POST(req: NextRequest) {
   if (action === 'upsert') {
     const { data, error } = await supabaseAdmin
       .from('chansons')
-      .insert(payload) // ✅ remplacé (plus de conflit)
+      .insert(payload)
       .select()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
