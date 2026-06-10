@@ -124,7 +124,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
   const searchArtists = async (val: string) => {
     if (!val.trim()) { setArtistSuggestions([]); return }
     const { data } = await supabase.from('chansons').select('artiste').ilike('artiste', `${val}%`).limit(8)
-    if (data) setArtistSuggestions([...new Set(data.map((r) => r.artiste))])
+   if (data) setArtistSuggestions(Array.from(new Set(data.map((r) => r.artiste))))
   }
 
   const searchAlbums = async (val: string, artiste: string) => {
@@ -132,7 +132,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
     let q = supabase.from('chansons').select('album').ilike('album', `${val}%`).limit(8)
     if (artiste.trim()) q = q.ilike('artiste', `%${artiste}%`)
     const { data } = await q
-    if (data) setAlbumSuggestions([...new Set(data.map((r) => r.album).filter(Boolean))])
+    if (data) setAlbumSuggestions(Array.from(new Set(data.map((r) => r.album).filter(Boolean))))
   }
 
   const handleLogin = () => {
