@@ -61,11 +61,11 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
   }
 
   // Unique artists from results
-  const artists = [...new Set(songs.map(s => s.artiste))].sort()
+  const artists = Array.from(new Set(songs.map(s => s.artiste))).sort()
 
   // Albums for selected artist
   const albums = selectedArtist
-    ? [...new Set(songs.filter(s => s.artiste === selectedArtist).map(s => s.album))].sort()
+    ? Array.from(new Set(songs.filter(s => s.artiste === selectedArtist).map(s => s.album))).sort()
     : []
 
   // Songs for selected artist + album
