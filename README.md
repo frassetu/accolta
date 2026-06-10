@@ -11,7 +11,7 @@ Tu vas utiliser 3 services, tous **gratuits** :
 - **GitHub** → héberge le code source
 - **Vercel** → met l'application en ligne
 
-Temps estimé : **30 à 45 minutes** la première fois.
+Temps estimé : **30 à 45 minutes** la première fois..
 
 ---
 
