@@ -1,97 +1,84 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import HomeTab from '@/components/HomeTab'
-import SearchTab from '@/components/SearchTab'
-import FavoritesTab from '@/components/FavoritesTab'
-import ProfileTab from '@/components/ProfileTab'
-import SongDetail from '@/components/SongDetail'
-import BottomNav from '@/components/BottomNav'
-import AdminPanel from '@/components/AdminPanel'
-import { Song } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
+import { Heart } from 'lucide-react'
+import { supabase, Song } from '@/lib/supabase'
+import SongCard from './SongCard'
 
-export type Tab = 'home' | 'search' | 'favorites' | 'profile'
+interface Props {
+  favorites: number[]
+  onSelectSong: (s: Song) => void
+  onToggleFavorite: (id: number) => void
+}
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('home')
-  const [selectedSong, setSelectedSong] = useState<Song | null>(null)
-  const [favorites, setFavorites] = useState<number[]>([])
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [showAdmin, setShowAdmin] = useState(false)
+export default function FavoritesTab({ favorites, onSelectSong, onToggleFavorite }: Props) {
+  const [songs, setSongs] = useState<Song[]>([])
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const saved = localStorage.getItem('accolta_favorites')
-    if (saved) setFavorites(JSON.parse(saved))
-    const admin = sessionStorage.getItem('accolta_admin')
-    if (admin === 'true') setIsAdmin(true)
-  }, [])
+    if (favorites.length === 0) {
+      setSongs([])
+      setLoading(false)
+      return
+    }
+    const load = async () => {
+      setLoading(true)
+      const { data } = await supabase
+        .from('chansons')
+        .select('*')
+        .in('id', favorites)
+        .order('artiste')
+      if (data) setSongs(data)
+      setLoading(false)
+    }
+    load()
+  }, [favorites])
 
-  const toggleFavorite = (id: number) => {
-    setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-      localStorage.setItem('accolta_favorites', JSON.stringify(next))
-      return next
-    })
-  }
-
-  if (showAdmin) {
-    return (
-      <AdminPanel
-        onClose={() => setShowAdmin(false)}
-        isAdmin={isAdmin}
-        onLogin={() => {
-          setIsAdmin(true)
-          sessionStorage.setItem('accolta_admin', 'true')
-        }}
-      />
-    )
-  }
-
-  if (selectedSong) {
-    return (
-      <SongDetail
-        song={selectedSong}
-        isFavorite={favorites.includes(selectedSong.id)}
-        onToggleFavorite={() => toggleFavorite(selectedSong.id)}
-        onBack={() => setSelectedSong(null)}
-      />
-    )
-  }
+  const filtered = songs.filter(s =>
+    !search || s.artiste.toLowerCase().includes(search.toLowerCase()) ||
+    s.titre.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
-    <div className="flex flex-col min-h-screen bg-bg">
-      <div className="flex-1 overflow-auto pb-20">
-        {activeTab === 'home' && (
-          <HomeTab
-            favorites={favorites}
-            onSelectSong={setSelectedSong}
-            onToggleFavorite={toggleFavorite}
-            onGoToSearch={() => setActiveTab('search')}
-            onGoToFavorites={() => setActiveTab('favorites')}
-          />
-        )}
-        {activeTab === 'search' && (
-          <SearchTab
-            favorites={favorites}
-            onSelectSong={setSelectedSong}
-            onToggleFavorite={toggleFavorite}
-          />
-        )}
-        {activeTab === 'favorites' && (
-          <FavoritesTab
-            favorites={favorites}
-            onSelectSong={setSelectedSong}
-            onToggleFavorite={toggleFavorite}
-          />
-        )}
-        {activeTab === 'profile' && (
-          <ProfileTab
-            isAdmin={isAdmin}
-            onOpenAdmin={() => setShowAdmin(true)}
-          />
-        )}
+    <div className="px-4 pt-14 pb-4 max-w-lg mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Heart className="w-6 h-6 text-[#FC5C7C]" fill="#FC5C7C" />
+        <h1 className="font-display font-bold text-xl text-text">Mes favoris</h1>
       </div>
-      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+
+      {favorites.length > 0 && (
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Rechercher dans vos favoris…"
+          className="w-full px-4 py-3 rounded-2xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted mb-4"
+        />
+      )}
+
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-card pulse" />)}
+        </div>
+      ) : favorites.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-4xl mb-3">🤍</p>
+          <p className="font-display font-semibold text-text">Pas encore de favoris</p>
+          <p className="text-sm text-text-muted mt-1">Appuyez sur le cœur d'une chanson</p>
+        </div>
+      ) : (
+        <div className="space-y-2 fade-in">
+          {filtered.map(song => (
+            <SongCard
+              key={song.id}
+              song={song}
+              isFavorite={true}
+              onSelect={() => onSelectSong(song)}
+              onToggleFavorite={() => onToggleFavorite(song.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

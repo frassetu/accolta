@@ -1,68 +1,50 @@
 'use client'
 
-import { Heart, Music } from 'lucide-react'
-import { Song } from '@/lib/supabase'
+import { Home, Search, Music2, Heart, User } from 'lucide-react'
+import { Tab } from '@/app/page'
 
 interface Props {
-  song: Song
-  isFavorite: boolean
-  onSelect: () => void
-  onToggleFavorite: () => void
-  showPreview?: boolean
+  activeTab: Tab
+  onChangeTab: (tab: Tab) => void
 }
 
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-}
+const tabs = [
+  { id: 'home' as Tab, label: 'Accueil', Icon: Home },
+  { id: 'search' as Tab, label: 'Recherche', Icon: Search },
+  { id: 'artists' as Tab, label: 'Artisti', Icon: Music2 },
+  { id: 'favorites' as Tab, label: 'Favoris', Icon: Heart },
+  { id: 'profile' as Tab, label: 'Profil', Icon: User },
+]
 
-function getColor(name: string) {
-  const colors = ['#7C5CFC', '#FC5C7C', '#5CF0FC', '#FCA85C', '#5CFC8E', '#FC5CEC']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
-}
-
-export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite, showPreview = true }: Props) {
-  const color = getColor(song.artiste)
-  const preview = song.paroles?.split('\n')[0]?.trim()
-
+export default function BottomNav({ activeTab, onChangeTab }: Props) {
   return (
-    <div
-      className="flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors cursor-pointer"
-      onClick={onSelect}
-    >
-      {/* Avatar */}
-      <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-display font-bold text-sm"
-        style={{ background: `${color}22`, border: `1.5px solid ${color}44` }}
-      >
-        <span style={{ color }}>{getInitials(song.artiste)}</span>
+    <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border bottom-nav z-50">
+      <div className="flex items-stretch max-w-lg mx-auto">
+        {tabs.map(({ id, label, Icon }) => {
+          const active = activeTab === id
+          return (
+            <button
+              key={id}
+              onClick={() => onChangeTab(id)}
+              className="flex-1 flex flex-col items-center gap-1 py-3 transition-all"
+            >
+              <div className={`relative ${active ? 'text-accent' : 'text-muted'}`}>
+                {id === 'favorites' && active ? (
+                  <Heart className="w-5 h-5" fill="currentColor" />
+                ) : (
+                  <Icon className="w-5 h-5" />
+                )}
+                {active && (
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />
+                )}
+              </div>
+              <span className={`text-[10px] font-medium ${active ? 'text-accent' : 'text-muted'}`}>
+                {label}
+              </span>
+            </button>
+          )
+        })}
       </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="font-display font-semibold text-text text-sm truncate">{song.artiste}</p>
-        <p className="text-text-muted text-sm truncate">{song.titre}</p>
-        {showPreview && preview && (
-          <p className="text-muted text-xs truncate mt-0.5">{preview}</p>
-        )}
-      </div>
-
-      {/* No lyrics indicator */}
-      {!song.paroles && (
-        <Music className="w-4 h-4 text-muted flex-shrink-0 opacity-50" />
-      )}
-
-      {/* Favorite */}
-      <button
-        onClick={e => { e.stopPropagation(); onToggleFavorite() }}
-        className="p-1.5 flex-shrink-0"
-      >
-        <Heart
-          className="w-5 h-5 transition-all"
-          style={isFavorite ? { color: '#FC5C7C', fill: '#FC5C7C' } : { color: '#6B6B80' }}
-        />
-      </button>
-    </div>
+    </nav>
   )
 }

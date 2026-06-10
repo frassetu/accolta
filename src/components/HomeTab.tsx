@@ -1,127 +1,53 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Music2, ChevronRight } from 'lucide-react'
-import { supabase, Song } from '@/lib/supabase'
-import SongCard from './SongCard'
+import { ShieldCheck, User, Info } from 'lucide-react'
 
 interface Props {
-  favorites: number[]
-  onSelectSong: (s: Song) => void
-  onToggleFavorite: (id: number) => void
-  onGoToSearch: () => void
-  onGoToFavorites: () => void
+  isAdmin: boolean
+  onOpenAdmin: () => void
 }
 
-export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onGoToSearch, onGoToFavorites }: Props) {
-  const [recent, setRecent] = useState<Song[]>([])
-  const [favSongs, setFavSongs] = useState<Song[]>([])
-  const [loading, setLoading] = useState(true)
-  const [totalSongs, setTotalSongs] = useState(0)
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      const { data: recData, count } = await supabase
-        .from('chansons')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .limit(5)
-
-      if (recData) setRecent(recData)
-      if (count) setTotalSongs(count)
-
-      if (favorites.length > 0) {
-        const { data: favData } = await supabase
-          .from('chansons')
-          .select('*')
-          .in('id', favorites.slice(0, 5))
-        if (favData) setFavSongs(favData)
-      }
-      setLoading(false)
-    }
-    load()
-  }, [favorites])
-
+export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
   return (
-    <div className="px-4 pt-12 pb-4 max-w-lg mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-2">
-        <Music2 className="w-6 h-6 text-accent" />
-        <h1 className="font-display font-bold text-xl text-text">Paroles</h1>
+    <div className="px-4 pt-14 pb-4 max-w-lg mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <User className="w-6 h-6 text-accent" />
+        <h1 className="font-display font-bold text-xl text-text">Profil</h1>
       </div>
-      {totalSongs > 0 && (
-        <p className="text-text-muted text-sm mb-5">{totalSongs.toLocaleString()} chansons disponibles</p>
-      )}
 
-      {/* Search hint — cliquable vers l'onglet Recherche */}
-      <button
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border text-text-muted text-sm mb-6 text-left"
-        onClick={onGoToSearch}
-      >
-        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        Rechercher un artiste, un titre, un mot…
-      </button>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 rounded-xl bg-card pulse" />
-          ))}
-        </div>
-      ) : (
-        <>
-          {/* Récents */}
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display font-semibold text-text">Récents</h2>
-            </div>
-            <div className="space-y-2">
-              {recent.length === 0 ? (
-                <p className="text-text-muted text-sm py-4 text-center">Aucune chanson pour l'instant</p>
-              ) : (
-                recent.map(song => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    isFavorite={favorites.includes(song.id)}
-                    onSelect={() => onSelectSong(song)}
-                    onToggleFavorite={() => onToggleFavorite(song.id)}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-
-          {/* Favoris */}
-          {favSongs.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display font-semibold text-text">Favoris</h2>
-                <button
-                  onClick={onGoToFavorites}
-                  className="flex items-center gap-1 text-accent text-sm font-medium"
-                >
-                  Tout voir <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {favSongs.map(song => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    isFavorite={true}
-                    onSelect={() => onSelectSong(song)}
-                    onToggleFavorite={() => onToggleFavorite(song.id)}
-                  />
-                ))}
-              </div>
-            </section>
+      <div className="space-y-3">
+        <button
+          onClick={onOpenAdmin}
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:border-accent transition-colors text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <ShieldCheck className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1">
+            <p className="font-display font-semibold text-text">Espace administrateur</p>
+            <p className="text-text-muted text-sm">
+              {isAdmin ? 'Connecte en tant qu admin' : 'Acces reserve'}
+            </p>
+          </div>
+          {isAdmin && (
+            <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full font-medium">
+              Admin
+            </span>
           )}
-        </>
-      )}
+        </button>
+
+        <div className="p-4 rounded-2xl bg-card border border-border">
+          <div className="flex items-center gap-3 mb-3">
+            <Info className="w-5 h-5 text-text-muted" />
+            <p className="font-display font-semibold text-text">A propos</p>
+          </div>
+          <p className="text-text-muted text-sm leading-relaxed">
+            Accolta est une application de paroles de chansons corses.
+            Chaque visiteur peut consulter et mettre en favoris ses chansons preferees.
+          </p>
+          <p className="text-muted text-xs mt-3">Version 1.0.0</p>
+        </div>
+      </div>
     </div>
   )
 }
