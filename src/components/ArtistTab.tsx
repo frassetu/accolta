@@ -91,7 +91,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
   }, {})
 
   const artistAlbums = selectedArtist
-    ? [...new Set(allSongs.filter(s => s.artiste === selectedArtist).map(s => s.album))].sort()
+    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist).map(s => s.album))).sort()
     : []
 
   const albumSongs = allSongs
