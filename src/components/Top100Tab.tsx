@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Trophy, ChevronLeft } from 'lucide-react'
-import { supabase, Song, getViews } from '@/lib/supabase'
+import { supabase, Song } from '@/lib/supabase'
 import SongCard from './SongCard'
 
 interface Props {
@@ -19,23 +19,14 @@ export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite, o
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const views = getViews()
-      const topIds = Object.entries(views)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 100)
-        .map(([id]) => parseInt(id))
-
-      if (topIds.length === 0) {
-        setLoading(false)
-        return
-      }
-
-      const { data } = await supabase.from('chansons').select('*').in('id', topIds)
+      const { data } = await supabase
+        .from('chansons')
+        .select('*')
+        .gt('view_count', 0)
+        .order('view_count', { ascending: false })
+        .limit(100)
       if (data) {
-        const sorted = topIds
-          .map(id => ({ song: data.find(s => s.id === id)!, count: views[id] }))
-          .filter(x => x.song)
-        setSongs(sorted)
+        setSongs(data.map(song => ({ song, count: song.view_count || 0 })))
       }
       setLoading(false)
     }
