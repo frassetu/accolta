@@ -101,22 +101,17 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
     })
     if (res.ok) {
       const data: Song[] = await res.json()
-      const headers = ['id', 'artiste', 'album', 'titre', 'annee', 'numero', 'paroles']
-      const escape = (v: any) => {
-        if (v == null) return ''
-        const str = String(v).replace(/"/g, '""')
-        return str.includes(',') || str.includes('\n') || str.includes('"') ? `"${str}"` : str
-      }
-      const rows = [headers.join(','), ...data.map(s =>
-        headers.map(h => escape((s as any)[h])).join(',')
-      )].join('\n')
-      const blob = new Blob(['\uFEFF' + rows], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `accolta_export_${new Date().toISOString().slice(0, 10)}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+      const headers = ['id', 'artiste', 'album', 'numero', 'titre', 'annee', 'paroles']
+      const rows = data.map(s => {
+        const row: Record<string, any> = {}
+        headers.forEach(h => { row[h] = (s as any)[h] ?? '' })
+        return row
+      })
+      const XLSX = await import('xlsx')
+      const ws = XLSX.utils.json_to_sheet(rows, { header: headers })
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Chansons')
+      XLSX.writeFile(wb, `accolta_export_${new Date().toISOString().slice(0, 10)}.xlsx`)
     }
     setExporting(false)
   }
@@ -308,7 +303,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium"
           >
             {exporting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            Export CSV
+            Export Excel
           </button>
           <button onClick={handleLogout} className="flex items-center gap-1.5 text-muted text-sm">
             <LogOut className="w-4 h-4" />
