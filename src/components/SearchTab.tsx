@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { X, ChevronLeft, Music2 } from 'lucide-react'
 import { supabase, Song } from '@/lib/supabase'
 import SongCard from './SongCard'
 import { SearchState } from '@/app/page'
@@ -14,13 +14,34 @@ interface Props {
   onSearchStateChange: (s: SearchState) => void
 }
 
+// Strip accents so "valli" also matches "Vallì" / "ùn la sò" matches "un la so"
+function normalize(str: string | null | undefined): string {
+  if (!str) return ''
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function getColor(name: string) {
+  const colors = ['#7C5CFC', '#FC5C7C', '#5CF0FC', '#FCA85C', '#5CFC8E', '#FC5CEC']
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return colors[Math.abs(hash) % colors.length]
+}
+
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+}
+
+type NormSong = Song & { _nArtiste: string; _nTitre: string; _nAlbum: string; _nParoles: string }
+
 export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, searchState, onSearchStateChange }: Props) {
-  const [songs, setSongs] = useState<Song[]>([])
-  const [loading, setLoading] = useState(false)
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const [allSongs, setAllSongs] = useState<NormSong[]>([])
+  const [loading, setLoading] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { query } = searchState
+  const { query, view, selectedArtist, selectedAlbum } = searchState
 
   // Autofocus the input every time this tab is shown, so the keyboard
   // opens immediately - no need to tap "rechercher" a second time.
@@ -28,37 +49,88 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
     inputRef.current?.focus()
   }, [])
 
+  // Load every song once, with lyrics, and precompute accent-free versions
+  // of each field so filtering on every keystroke stays instant.
   useEffect(() => {
-    if (!query.trim()) {
-      setSongs([])
-      return
+    const load = async () => {
+      setLoading(true)
+      let all: Song[] = []
+      let from = 0
+      const pageSize = 1000
+      while (true) {
+        const { data } = await supabase
+          .from('chansons')
+          .select('*')
+          .range(from, from + pageSize - 1)
+          .order('artiste')
+        if (!data || data.length === 0) break
+        all = [...all, ...data]
+        if (data.length < pageSize) break
+        from += pageSize
+      }
+      setAllSongs(all.map(s => ({
+        ...s,
+        _nArtiste: normalize(s.artiste),
+        _nTitre: normalize(s.titre),
+        _nAlbum: normalize(s.album),
+        _nParoles: normalize(s.paroles),
+      })))
+      setLoading(false)
     }
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(query), 300)
-    return () => clearTimeout(debounceRef.current)
-  }, [query])
+    load()
+  }, [])
 
-  const search = async (q: string) => {
-    setLoading(true)
-    const { data } = await supabase
-      .from('chansons')
-      .select('*')
-      .or(`titre.ilike.%${q}%,artiste.ilike.%${q}%,album.ilike.%${q}%`)
-      .order('titre', { ascending: true })
-      .limit(200)
-    if (data) setSongs(data)
-    setLoading(false)
-  }
+  const nq = normalize(query)
+
+  // Priorité 1 : artistes dont le nom correspond -> on entre dans l'artiste
+  const artistMatches = useMemo(() => {
+    if (!nq) return []
+    const names = new Set<string>()
+    allSongs.forEach(s => { if (s._nArtiste.includes(nq)) names.add(s.artiste) })
+    return Array.from(names).sort().map(name => ({
+      name,
+      count: allSongs.filter(s => s.artiste === name).length,
+    }))
+  }, [allSongs, nq])
+
+  // Priorité 2 : chansons dont le titre (ou l'album) correspond
+  const titleMatches = useMemo(() => {
+    if (!nq) return []
+    return allSongs.filter(s => s._nTitre.includes(nq) || s._nAlbum.includes(nq))
+  }, [allSongs, nq])
+
+  // Priorité 3 : chansons dont les paroles contiennent le mot (et qui ne sont pas déjà affichées au-dessus)
+  const lyricsMatches = useMemo(() => {
+    if (!nq) return []
+    const titleIds = new Set(titleMatches.map(s => s.id))
+    return allSongs.filter(s => !titleIds.has(s.id) && s._nParoles.includes(nq))
+  }, [allSongs, nq, titleMatches])
+
+  const noResults = nq && artistMatches.length === 0 && titleMatches.length === 0 && lyricsMatches.length === 0
+
+  // Drilldown dans un artiste (identique à la page Artistes)
+  const artistAlbums = selectedArtist
+    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist).map(s => s.album))).sort()
+    : []
+
+  const albumSongs = allSongs
+    .filter(s => s.artiste === selectedArtist && s.album === selectedAlbum)
+    .sort((a, b) => (a.numero || 999) - (b.numero || 999))
+
+  const setQuery = (q: string) => onSearchStateChange({ query: q, view: 'artists', selectedArtist: null, selectedAlbum: null })
 
   const handleClearQuery = () => {
     onSearchStateChange({ query: '', view: 'artists', selectedArtist: null, selectedAlbum: null })
-    setSongs([])
+  }
+
+  const goToArtist = (name: string) => {
+    onSearchStateChange({ ...searchState, view: 'albums', selectedArtist: name, selectedAlbum: null })
   }
 
   return (
     <div className="px-4 pt-12 pb-4 max-w-lg mx-auto">
 
-      {/* Search bar - results appear directly below, no artist > album drilldown */}
+      {/* Search bar */}
       <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border mb-4">
         <svg className="w-4 h-4 text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -66,11 +138,8 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
         <input
           ref={inputRef}
           value={query}
-          onChange={e => {
-            const val = e.target.value
-            onSearchStateChange({ ...searchState, query: val })
-          }}
-          placeholder="Artiste, titre, album…"
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Artiste, titre, album, paroles…"
           className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted"
         />
         {query && (
@@ -80,38 +149,152 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
         )}
       </div>
 
-      {loading && (
+      {/* Breadcrumb + retour, pour le drilldown artiste > albums > chansons */}
+      {view !== 'artists' && (
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => {
+              if (view === 'albums') {
+                onSearchStateChange({ ...searchState, view: 'artists', selectedArtist: null, selectedAlbum: null })
+              }
+              if (view === 'songs') {
+                onSearchStateChange({ ...searchState, view: 'albums', selectedAlbum: null })
+              }
+            }}
+            className="flex items-center gap-1 text-sm text-accent"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Retour
+          </button>
+          <span className="text-sm text-text-muted truncate">
+            {view === 'albums' && selectedArtist}
+            {view === 'songs' && `${selectedArtist} › ${selectedAlbum || 'Sans album'}`}
+          </span>
+        </div>
+      )}
+
+      {loading && view === 'artists' && (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-card pulse" />)}
         </div>
       )}
 
-      {/* RESULTATS - liste plate de chansons, plus rapide qu'artiste > album > chanson */}
-      {!loading && query && (
-        <div className="space-y-2">
-          {songs.length === 0 ? (
-            <p className="text-center text-muted py-10">Aucun résultat</p>
-          ) : (
-            songs.map(song => (
-              <SongCard
-                key={song.id}
-                song={song}
-                isFavorite={favorites.includes(song.id)}
-                onSelect={() => onSelectSong(song, songs)}
-                onToggleFavorite={() => onToggleFavorite(song.id)}
-              />
-            ))
+      {/* RESULTATS GROUPES */}
+      {!loading && view === 'artists' && query && (
+        <div className="space-y-5">
+          {noResults && <p className="text-center text-muted py-10">Aucun résultat</p>}
+
+          {artistMatches.length > 0 && (
+            <div>
+              <p className="text-xs text-muted font-medium mb-2 px-1">ARTISTES</p>
+              <div className="space-y-1.5">
+                {artistMatches.map(({ name, count }) => {
+                  const color = getColor(name)
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => goToArtist(name)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ background: `${color}22`, border: `1.5px solid ${color}44`, color }}>
+                        {getInitials(name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-text font-medium text-sm truncate">{name}</p>
+                        <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
+                      </div>
+                      <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {titleMatches.length > 0 && (
+            <div>
+              <p className="text-xs text-muted font-medium mb-2 px-1">CHANSONS</p>
+              <div className="space-y-2">
+                {titleMatches.map(song => (
+                  <SongCard
+                    key={song.id}
+                    song={song}
+                    isFavorite={favorites.includes(song.id)}
+                    onSelect={() => onSelectSong(song, titleMatches)}
+                    onToggleFavorite={() => onToggleFavorite(song.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {lyricsMatches.length > 0 && (
+            <div>
+              <p className="text-xs text-muted font-medium mb-2 px-1">DANS LES PAROLES</p>
+              <div className="space-y-2">
+                {lyricsMatches.map(song => (
+                  <SongCard
+                    key={song.id}
+                    song={song}
+                    isFavorite={favorites.includes(song.id)}
+                    onSelect={() => onSelectSong(song, lyricsMatches)}
+                    onToggleFavorite={() => onToggleFavorite(song.id)}
+                  />
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
 
+      {/* ALBUMS de l'artiste sélectionné */}
+      {!loading && view === 'albums' && selectedArtist && (
+        <div className="space-y-2">
+          {artistAlbums.map(album => {
+            const count = allSongs.filter(s => s.artiste === selectedArtist && s.album === album).length
+            return (
+              <button
+                key={album}
+                onClick={() => onSearchStateChange({ ...searchState, view: 'songs', selectedAlbum: album })}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-border flex items-center justify-center flex-shrink-0">
+                  <Music2 className="w-5 h-5 text-muted" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-text font-medium text-sm truncate">{album || 'Sans album'}</p>
+                  <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
+                </div>
+                <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* CHANSONS de l'album sélectionné, classées par n° de piste */}
+      {!loading && view === 'songs' && (
+        <div className="space-y-2">
+          {albumSongs.map(song => (
+            <SongCard
+              key={song.id}
+              song={song}
+              isFavorite={favorites.includes(song.id)}
+              onSelect={() => onSelectSong(song, albumSongs)}
+              onToggleFavorite={() => onToggleFavorite(song.id)}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Empty state */}
-      {!query && !loading && (
+      {!query && !loading && view === 'artists' && (
         <div className="text-center py-16 text-muted">
           <svg className="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <p className="text-sm">Recherchez un artiste, un titre ou un album</p>
+          <p className="text-sm">Recherchez un artiste, un titre, un album ou des paroles</p>
         </div>
       )}
     </div>
