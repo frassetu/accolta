@@ -17,16 +17,11 @@ export type Song = {
   view_count?: number
 }
 
-// Track song views in localStorage (no backend needed)
+// Track song views globally (shared across all users) via Supabase.
+// Requires the `view_count` column + `increment_view_count` function (see README / SQL setup).
 export function trackView(songId: number) {
   if (typeof window === 'undefined') return
-  const key = 'accolta_views'
-  const views: Record<number, number> = JSON.parse(localStorage.getItem(key) || '{}')
-  views[songId] = (views[songId] || 0) + 1
-  localStorage.setItem(key, JSON.stringify(views))
-}
-
-export function getViews(): Record<number, number> {
-  if (typeof window === 'undefined') return {}
-  return JSON.parse(localStorage.getItem('accolta_views') || '{}')
+  supabase.rpc('increment_view_count', { song_id: songId }).then(({ error }) => {
+    if (error) console.error('trackView error:', error.message)
+  })
 }
