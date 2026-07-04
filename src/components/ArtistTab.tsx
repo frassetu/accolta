@@ -130,7 +130,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
   return (
     <div className="flex flex-col min-h-screen bg-bg max-w-lg mx-auto">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 border-b border-border sticky top-[92px] bg-bg z-10">
+      <div className="px-4 pt-4 pb-3 border-b border-border sticky top-[68px] bg-bg z-10">
         {view === 'list' || view === 'search_results' ? (
           <>
             {/* Titre de la page, comme les autres onglets */}
