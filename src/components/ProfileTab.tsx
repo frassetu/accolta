@@ -74,7 +74,7 @@ export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
             onClick={handleVersionTap}
             className="text-muted text-xs mt-3 select-none"
           >
-            Version 1.0.0
+            Version {process.env.NEXT_PUBLIC_BUILD_SHA} · {process.env.NEXT_PUBLIC_BUILD_DATE}
           </p>
         </div>
       </div>
