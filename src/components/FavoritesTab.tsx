@@ -13,7 +13,6 @@ interface Props {
 
 export default function FavoritesTab({ favorites, onSelectSong, onToggleFavorite }: Props) {
   const [songs, setSongs] = useState<Song[]>([])
-  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -35,26 +34,12 @@ export default function FavoritesTab({ favorites, onSelectSong, onToggleFavorite
     load()
   }, [favorites])
 
-  const filtered = songs.filter(s =>
-    !search || s.artiste.toLowerCase().includes(search.toLowerCase()) ||
-    s.titre.toLowerCase().includes(search.toLowerCase())
-  )
-
   return (
     <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Heart className="w-6 h-6 text-[#FC5C7C]" fill="#FC5C7C" />
         <h1 className="font-display font-bold text-xl text-text">Mes favoris</h1>
       </div>
-
-      {favorites.length > 0 && (
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher dans vos favoris…"
-          className="w-full px-4 py-3 rounded-2xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted mb-4"
-        />
-      )}
 
       {loading ? (
         <div className="space-y-2">
@@ -68,7 +53,7 @@ export default function FavoritesTab({ favorites, onSelectSong, onToggleFavorite
         </div>
       ) : (
         <div className="space-y-2 fade-in">
-          {filtered.map(song => (
+          {songs.map(song => (
             <SongCard
               key={song.id}
               song={song}
