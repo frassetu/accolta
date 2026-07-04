@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Accolta – Paroles de Chansons',
-  description: 'Retrouvez les paroles de vos chansons corses préférées',
+  title: 'Vogliu Cantà ! – Paroddi di Canzoni Corsi',
+  description: 'I paroddi di i vosci canzoni prifiriti',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Accolta',
+    title: 'Vogliu Cantà !',
   },
   icons: {
     icon: '/icon-192.png',
