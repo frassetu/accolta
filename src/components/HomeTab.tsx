@@ -21,9 +21,11 @@ export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onG
       const { data: recData } = await supabase
         .from('chansons')
         .select('*')
+        .not('paroles', 'is', null)
+        .neq('paroles', '')
         .order('created_at', { ascending: false })
         .limit(20)
-      if (recData) setRecent(recData)
+      if (recData) setRecent(recData as Song[])
       setLoading(false)
     }
     load()
