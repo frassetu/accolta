@@ -316,6 +316,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
           <div className="space-y-2">
             {albumSongs.map(song => (
               <SongCard key={song.id} song={song}
+                trackNumber={song.numero}
                 isFavorite={favorites.includes(song.id)}
                 onSelect={() => onSelectSong(song, albumSongs)}
                 onToggleFavorite={() => onToggleFavorite(song.id)}
