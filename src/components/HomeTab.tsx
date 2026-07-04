@@ -30,7 +30,7 @@ export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onG
   }, [])
 
   return (
-    <div className="px-4 pt-12 pb-4 max-w-lg mx-auto">
+    <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
       {/* Search bar - tapping goes straight to Search with the keyboard already open */}
       <button
         className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border text-text-muted text-sm mb-6 text-left"
