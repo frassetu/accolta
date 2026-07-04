@@ -93,7 +93,7 @@ export default function App() {
         <>
           <TopBar />
           <div className="flex flex-col min-h-screen bg-bg">
-            <div className="flex-1 pt-[68px] pb-20">
+            <div className="flex-1 pt-[72px] pb-20">
               {activeTab === 'home' && (
                 <HomeTab
                   favorites={favorites}
