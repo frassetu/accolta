@@ -130,15 +130,15 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
   return (
     <div className="flex flex-col min-h-screen bg-bg max-w-lg mx-auto">
       {/* Header */}
-      <div className="px-4 pt-12 pb-3 border-b border-border sticky top-0 bg-bg z-10">
+      <div className="px-4 pt-4 pb-3 border-b border-border sticky top-[92px] bg-bg z-10">
         {view === 'list' || view === 'search_results' ? (
           <>
-            {/* App header with logo */}
+            {/* Titre de la page, comme les autres onglets */}
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
                 <Music2 className="w-4 h-4 text-white" />
               </div>
-              <span className="font-display font-bold text-text text-lg">Vogliu Cantà !</span>
+              <span className="font-display font-bold text-text text-lg">Artisti</span>
               {!loading && (
                 <span className="text-xs text-muted ml-auto">{artists.length} artistes</span>
               )}
