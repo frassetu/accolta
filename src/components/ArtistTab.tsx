@@ -41,6 +41,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
     const load = async () => {
       setLoading(true)
       const allData = await getAllSongs()
+      setAllSongs(allData)
       const map = new Map<string, { count: number; albums: Set<string> }>()
       for (const s of allData) {
         if (!map.has(s.artiste)) map.set(s.artiste, { count: 0, albums: new Set() })
