@@ -10,9 +10,10 @@ interface Props {
   onSelect: () => void
   onToggleFavorite: () => void
   rank?: number
+  trackNumber?: number | null
 }
 
-export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite, rank }: Props) {
+export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite, rank, trackNumber }: Props) {
   const color = getColor(song.artiste)
 
   return (
@@ -24,6 +25,12 @@ export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite,
         <div className="w-9 text-center flex-shrink-0">
           <span className={`font-display font-bold text-sm ${rank <= 3 ? 'text-accent' : 'text-muted'}`}>
             {rank}
+          </span>
+        </div>
+      ) : trackNumber ? (
+        <div className="w-9 text-center flex-shrink-0">
+          <span className="font-display font-semibold text-sm text-muted">
+            {trackNumber}
           </span>
         </div>
       ) : (
