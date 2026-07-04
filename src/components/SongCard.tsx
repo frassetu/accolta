@@ -2,6 +2,7 @@
 
 import { Heart } from 'lucide-react'
 import { Song } from '@/lib/supabase'
+import { getColor, getInitials } from '@/lib/format'
 
 interface Props {
   song: Song
@@ -9,17 +10,6 @@ interface Props {
   onSelect: () => void
   onToggleFavorite: () => void
   rank?: number
-}
-
-function getColor(name: string) {
-  const colors = ['#7C5CFC', '#FC5C7C', '#5CF0FC', '#FCA85C', '#5CFC8E', '#FC5CEC']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
-}
-
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 }
 
 export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite, rank }: Props) {
@@ -50,11 +40,6 @@ export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite,
           {song.artiste}{song.album ? ` · ${song.album}` : ''}
         </p>
       </div>
-      {song.paroles ? (
-        <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" title="Paroles disponibles" />
-      ) : (
-        <span className="w-1.5 h-1.5 rounded-full bg-border flex-shrink-0" />
-      )}
       <button
         onClick={e => { e.stopPropagation(); onToggleFavorite() }}
         className="p-1 flex-shrink-0"

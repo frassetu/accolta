@@ -6,11 +6,16 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''
+// Secret lu uniquement côté serveur (fallback sur l'ancien nom NEXT_PUBLIC_*
+// pour ne rien casser sur les déploiements existants).
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''
 
 function checkAuth(req: NextRequest) {
-  const token = req.headers.get('x-admin-token')
-  return token === ADMIN_PASSWORD
+  if (!ADMIN_PASSWORD) return false
+  // Authentification via le cookie httpOnly posé au login (le client n'a
+  // plus jamais à manipuler le mot de passe).
+  const cookie = req.cookies.get('accolta_admin')?.value
+  return cookie === ADMIN_PASSWORD
 }
 
 export async function GET(req: NextRequest) {

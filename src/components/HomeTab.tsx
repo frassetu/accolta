@@ -9,8 +9,6 @@ interface Props {
   onSelectSong: (s: Song, playlist?: Song[]) => void
   onToggleFavorite: (id: number) => void
   onGoToSearch: () => void
-  onGoToFavorites: () => void
-  onGoToTop100: () => void
 }
 
 export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onGoToSearch }: Props) {

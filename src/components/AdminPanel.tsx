@@ -3,10 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Plus, Pencil, Trash2, Upload, Search, ChevronLeft, Eye, EyeOff, LogOut, CheckCircle, AlertCircle, Loader, X, Download } from 'lucide-react'
 import { supabase, Song } from '@/lib/supabase'
+import { sanitizeSearch } from '@/lib/format'
+import { invalidateSongs } from '@/lib/songs'
 
 interface Props {
   isAdmin: boolean
   onLogin: () => void
+  onLogout: () => void
   onClose: () => void
 }
 
@@ -20,7 +23,7 @@ type ImportStatus =
 
 const emptyForm = { artiste: '', album: '', numero: '', titre: '', annee: '', paroles: '' }
 
-export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
+export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Props) {
   const [tab, setTab] = useState<AdminTab>('songs')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,11 +45,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
   const [exporting, setExporting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || ''
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''
-
-  const getToken = () =>
-    typeof window !== 'undefined' ? sessionStorage.getItem('accolta_admin_token') || '' : ''
+  const [loggingIn, setLoggingIn] = useState(false)
 
   useEffect(() => {
     if (isAdmin) { loadSongs(); loadStats() }
@@ -57,8 +56,9 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
     setLoading(true)
     let query = supabase.from('chansons').select('*').order('artiste')
 
-    if (q && q.trim()) {
-      query = query.or(`artiste.ilike.%${q}%,titre.ilike.%${q}%,album.ilike.%${q}%`)
+    const safe = q ? sanitizeSearch(q) : ''
+    if (safe) {
+      query = query.or(`artiste.ilike.%${safe}%,titre.ilike.%${safe}%,album.ilike.%${safe}%`)
     }
 
     // Paginate to get all results
@@ -77,9 +77,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
   }
 
   const loadStats = async () => {
-    const res = await fetch('/api/admin?action=stats', {
-      headers: { 'x-admin-token': getToken() },
-    })
+    const res = await fetch('/api/admin?action=stats')
     if (res.ok) {
       const d = await res.json()
       setStats({ total: d.total || 0, withLyrics: d.withLyrics || 0, artists: d.artists || 0 })
@@ -96,9 +94,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
 
   const handleExportCSV = async () => {
     setExporting(true)
-    const res = await fetch('/api/admin?action=export', {
-      headers: { 'x-admin-token': getToken() },
-    })
+    const res = await fetch('/api/admin?action=export')
     if (res.ok) {
       const data: Song[] = await res.json()
       const headers = ['id', 'artiste', 'album', 'numero', 'titre', 'annee', 'paroles']
@@ -117,32 +113,47 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
   }
 
   const searchArtists = async (val: string) => {
-    if (!val.trim()) { setArtistSuggestions([]); return }
-    const { data } = await supabase.from('chansons').select('artiste').ilike('artiste', `${val}%`).limit(8)
-   if (data) setArtistSuggestions(Array.from(new Set(data.map((r) => r.artiste))))
+    const safe = sanitizeSearch(val)
+    if (!safe) { setArtistSuggestions([]); return }
+    const { data } = await supabase.from('chansons').select('artiste').ilike('artiste', `${safe}%`).limit(8)
+    if (data) setArtistSuggestions(Array.from(new Set(data.map((r) => r.artiste))))
   }
 
   const searchAlbums = async (val: string, artiste: string) => {
-    if (!val.trim()) { setAlbumSuggestions([]); return }
-    let q = supabase.from('chansons').select('album').ilike('album', `${val}%`).limit(8)
-    if (artiste.trim()) q = q.ilike('artiste', `%${artiste}%`)
+    const safe = sanitizeSearch(val)
+    if (!safe) { setAlbumSuggestions([]); return }
+    const safeArtiste = sanitizeSearch(artiste)
+    let q = supabase.from('chansons').select('album').ilike('album', `${safe}%`).limit(8)
+    if (safeArtiste) q = q.ilike('artiste', `%${safeArtiste}%`)
     const { data } = await q
     if (data) setAlbumSuggestions(Array.from(new Set(data.map((r) => r.album).filter(Boolean))))
   }
 
-  const handleLogin = () => {
-    if (email.trim() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      sessionStorage.setItem('accolta_admin_token', password)
-      onLogin()
-      setLoginError('')
-    } else {
-      setLoginError('Email ou mot de passe incorrect')
+  const handleLogin = async () => {
+    setLoggingIn(true)
+    setLoginError('')
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      })
+      if (res.ok) {
+        onLogin()
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Email ou mot de passe incorrect' }))
+        setLoginError(err.error || 'Email ou mot de passe incorrect')
+      }
+    } catch {
+      setLoginError('Erreur de connexion au serveur')
+    } finally {
+      setLoggingIn(false)
     }
   }
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('accolta_admin')
-    sessionStorage.removeItem('accolta_admin_token')
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
+    onLogout()
     onClose()
   }
 
@@ -170,11 +181,12 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
     const body = editSong ? { action, id: editSong.id, ...payload } : { action, ...payload }
     const res = await fetch('/api/admin', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-token': getToken() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     setSaving(false)
     if (res.ok) {
+      invalidateSongs()
       resetForm()
       setTab(editSong ? 'songs' : 'add')
       loadSongs(search)
@@ -189,8 +201,8 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
     if (!confirm('Supprimer cette chanson ?')) return
     await fetch(`/api/admin?id=${id}`, {
       method: 'DELETE',
-      headers: { 'x-admin-token': getToken() },
     })
+    invalidateSongs()
     loadSongs(search)
     loadStats()
   }
@@ -218,7 +230,6 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
       formData.append('file', file)
       const res = await fetch('/api/admin', {
         method: 'POST',
-        headers: { 'x-admin-token': getToken() },
         body: formData,
       })
       if (!res.ok) {
@@ -234,6 +245,7 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
         inserted: result.inserted,
         errors: result.errors || [],
       })
+      invalidateSongs()
       loadStats()
       loadSongs()
     } catch (err: any) {
@@ -276,8 +288,9 @@ export default function AdminPanel({ isAdmin, onLogin, onClose }: Props) {
               </button>
             </div>
             {loginError && <p className="text-red-400 text-sm text-center">{loginError}</p>}
-            <button onClick={handleLogin}
-              className="w-full py-3.5 rounded-2xl accent-gradient text-white font-display font-semibold text-sm">
+            <button onClick={handleLogin} disabled={loggingIn || !email.trim() || !password}
+              className="w-full py-3.5 rounded-2xl accent-gradient text-white font-display font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+              {loggingIn && <Loader className="w-4 h-4 animate-spin" />}
               Se connecter
             </button>
           </div>

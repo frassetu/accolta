@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { X, ChevronLeft, Music2 } from 'lucide-react'
-import { supabase, Song } from '@/lib/supabase'
+import { Song } from '@/lib/supabase'
+import { getAllSongs } from '@/lib/songs'
+import { getColor, getInitials, normalize } from '@/lib/format'
 import SongCard from './SongCard'
 import { SearchState } from '@/app/page'
 
@@ -12,26 +14,6 @@ interface Props {
   onToggleFavorite: (id: number) => void
   searchState: SearchState
   onSearchStateChange: (s: SearchState) => void
-}
-
-// Strip accents so "valli" also matches "Vallì" / "ùn la sò" matches "un la so"
-function normalize(str: string | null | undefined): string {
-  if (!str) return ''
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
-function getColor(name: string) {
-  const colors = ['#7C5CFC', '#FC5C7C', '#5CF0FC', '#FCA85C', '#5CFC8E', '#FC5CEC']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
-}
-
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 }
 
 type NormSong = Song & { _nArtiste: string; _nTitre: string; _nAlbum: string; _nParoles: string }
@@ -49,25 +31,14 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
     inputRef.current?.focus()
   }, [])
 
-  // Load every song once, with lyrics, and precompute accent-free versions
-  // of each field so filtering on every keystroke stays instant.
+  // Load every song once (cache partagé entre onglets), and precompute
+  // accent-free versions of each field so filtering on every keystroke stays instant.
   useEffect(() => {
+    let cancelled = false
     const load = async () => {
       setLoading(true)
-      let all: Song[] = []
-      let from = 0
-      const pageSize = 1000
-      while (true) {
-        const { data } = await supabase
-          .from('chansons')
-          .select('*')
-          .range(from, from + pageSize - 1)
-          .order('artiste')
-        if (!data || data.length === 0) break
-        all = [...all, ...data]
-        if (data.length < pageSize) break
-        from += pageSize
-      }
+      const all = await getAllSongs()
+      if (cancelled) return
       setAllSongs(all.map(s => ({
         ...s,
         _nArtiste: normalize(s.artiste),
@@ -78,6 +49,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
       setLoading(false)
     }
     load()
+    return () => { cancelled = true }
   }, [])
 
   const nq = normalize(query)

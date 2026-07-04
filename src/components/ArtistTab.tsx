@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, Music2, Search, X } from 'lucide-react'
 import { supabase, Song } from '@/lib/supabase'
+import { getAllSongs } from '@/lib/songs'
+import { getColor, getInitials, sanitizeSearch } from '@/lib/format'
 import SongCard from './SongCard'
 
 type View = 'list' | 'albums' | 'songs' | 'search_results'
@@ -17,17 +19,6 @@ interface ArtistInfo {
   name: string
   count: number
   albums: string[]
-}
-
-function getColor(name: string) {
-  const colors = ['#7C5CFC', '#FC5C7C', '#5CF0FC', '#FCA85C', '#5CFC8E', '#FC5CEC']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
-}
-
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 }
 
 type SearchResult =
@@ -49,21 +40,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      let allData: Song[] = []
-      let from = 0
-      const pageSize = 1000
-      while (true) {
-        const { data } = await supabase
-          .from('chansons')
-          .select('id,artiste,album,titre,annee,numero,paroles,created_at')
-          .range(from, from + pageSize - 1)
-          .order('artiste')
-        if (!data || data.length === 0) break
-        allData = [...allData, ...data]
-        if (data.length < pageSize) break
-        from += pageSize
-      }
-      setAllSongs(allData)
+      const allData = await getAllSongs()
       const map = new Map<string, { count: number; albums: Set<string> }>()
       for (const s of allData) {
         if (!map.has(s.artiste)) map.set(s.artiste, { count: 0, albums: new Set() })
@@ -94,17 +71,20 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       setSearchLoading(true)
+      const safe = sanitizeSearch(q)
+      if (!safe) { setSearchResults([]); setSearchLoading(false); return }
       const { data } = await supabase
         .from('chansons')
         .select('*')
-        .or(`titre.ilike.%${q}%,artiste.ilike.%${q}%,paroles.ilike.%${q}%`)
+        .or(`titre.ilike.%${safe}%,artiste.ilike.%${safe}%,paroles.ilike.%${safe}%`)
         .limit(100)
 
       if (data) {
+        const needle = safe.toLowerCase()
         const results: SearchResult[] = []
         // Artists matching
         const artistMatches = Array.from(new Set(
-          data.filter(s => s.artiste.toLowerCase().includes(q.toLowerCase())).map(s => s.artiste)
+          data.filter(s => s.artiste.toLowerCase().includes(needle)).map(s => s.artiste)
         ))
         artistMatches.forEach(name => {
           const count = data.filter(s => s.artiste === name).length
@@ -113,8 +93,8 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
         // Songs matching title or lyrics
         data
           .filter(s =>
-            s.titre.toLowerCase().includes(q.toLowerCase()) ||
-            (s.paroles && s.paroles.toLowerCase().includes(q.toLowerCase()))
+            s.titre.toLowerCase().includes(needle) ||
+            (s.paroles && s.paroles.toLowerCase().includes(needle))
           )
           .forEach(song => results.push({ type: 'song', song }))
 

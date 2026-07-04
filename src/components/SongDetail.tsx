@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, Heart, Music, ChevronRight, Flag, Send, Pencil, Trash2, Loader, Music2 } from 'lucide-react'
 import { Song, trackView } from '@/lib/supabase'
+import { getColor, getInitials } from '@/lib/format'
 
 interface Props {
   song: Song
@@ -16,21 +17,7 @@ interface Props {
   onNext: () => void
 }
 
-function getColor(name: string) {
-  const colors = ['#7C5CFC', '#FC5C7C', '#5CF0FC', '#FCA85C', '#5CFC8E', '#FC5CEC']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
-}
-
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-}
-
 type ModalType = 'report' | 'propose' | 'edit' | null
-
-const getToken = () =>
-  typeof window !== 'undefined' ? sessionStorage.getItem('accolta_admin_token') || '' : ''
 
 export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack, isAdmin, hasPrev, hasNext, onPrev, onNext }: Props) {
   const color = getColor(song.artiste)
@@ -97,7 +84,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
     setSaveError('')
     const res = await fetch('/api/admin', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-token': getToken() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'update',
         id: song.id,
@@ -124,7 +111,6 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
     setDeleting(true)
     await fetch(`/api/admin?id=${song.id}`, {
       method: 'DELETE',
-      headers: { 'x-admin-token': getToken() },
     })
     setDeleting(false)
     onBack()

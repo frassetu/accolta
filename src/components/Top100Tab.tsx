@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Trophy, ChevronLeft } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import { supabase, Song } from '@/lib/supabase'
 import SongCard from './SongCard'
 
@@ -9,10 +9,9 @@ interface Props {
   favorites: number[]
   onSelectSong: (s: Song, playlist?: Song[]) => void
   onToggleFavorite: (id: number) => void
-  onBack: () => void
 }
 
-export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite, onBack }: Props) {
+export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite }: Props) {
   const [songs, setSongs] = useState<{ song: Song; count: number }[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -39,9 +38,6 @@ export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite, o
     <div className="flex flex-col min-h-screen bg-bg max-w-lg mx-auto">
       <div className="px-4 pt-12 pb-3 border-b border-border sticky top-0 bg-bg z-10">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-8 h-8 rounded-xl bg-card flex items-center justify-center">
-            <ChevronLeft className="w-5 h-5 text-text" />
-          </button>
           <Trophy className="w-5 h-5 text-accent" />
           <h1 className="font-display font-bold text-xl text-text">Top 100</h1>
         </div>
