@@ -252,6 +252,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
             <SongCard
               key={song.id}
               song={song}
+              trackNumber={song.numero}
               isFavorite={favorites.includes(song.id)}
               onSelect={() => onSelectSong(song, albumSongs)}
               onToggleFavorite={() => onToggleFavorite(song.id)}
