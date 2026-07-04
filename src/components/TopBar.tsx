@@ -1,15 +1,24 @@
 'use client'
 
+interface Props {
+  title?: string
+}
+
 // Bandeau fixe affiché en permanence tout en haut de l'application,
-// quelle que soit la page. Hauteur totale = 72px (pt-6 + h-9 + pb-3),
-// à garder synchronisée avec pt-[72px] dans page.tsx et top-[72px]
-// des sticky headers internes (ArtistTab, Top100Tab).
-export default function TopBar() {
+// quelle que soit la page. Hauteur totale = 100px (pt-6 + h-16 + pb-3),
+// à garder synchronisée avec pt-[100px] dans page.tsx et top-[100px]
+// du sticky header interne à ArtistTab (vues albums/songs).
+export default function TopBar({ title }: Props) {
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-bg border-b border-border">
-      <div className="max-w-lg mx-auto flex items-center gap-2 px-4 pt-6 pb-3">
-        <img src="/icon-192.png" alt="" className="w-9 h-9 rounded-lg flex-shrink-0" />
-        <img src="/logo-wordmark-transparent.png" alt="Vogliu Cantà !" className="h-9 w-auto" />
+      <div className="max-w-lg mx-auto flex items-center justify-between gap-3 px-4 pt-6 pb-3">
+        <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+          <img src="/icon-192.png" alt="" className="w-11 h-11 rounded-xl flex-shrink-0" />
+          <img src="/logo-wordmark-transparent.png" alt="Vogliu Cantà !" className="h-16 w-auto" />
+        </div>
+        {title && (
+          <span className="font-display font-semibold text-text text-sm truncate">{title}</span>
+        )}
       </div>
     </div>
   )

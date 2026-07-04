@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { ShieldCheck, User, Info } from 'lucide-react'
+import { ShieldCheck, Info } from 'lucide-react'
 
 interface Props {
   isAdmin: boolean
@@ -33,11 +33,6 @@ export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
 
   return (
     <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <User className="w-6 h-6 text-accent" />
-        <h1 className="font-display font-bold text-xl text-text">Profil</h1>
-      </div>
-
       <div className="space-y-3">
         {showAdminEntry && (
           <button

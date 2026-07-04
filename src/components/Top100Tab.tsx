@@ -35,16 +35,8 @@ export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite }:
   const playlist = songs.map(s => s.song)
 
   return (
-    <div className="flex flex-col min-h-screen bg-bg max-w-lg mx-auto">
-      <div className="px-4 pt-4 pb-3 border-b border-border sticky top-[72px] bg-bg z-10">
-        <div className="flex items-center gap-3">
-          <Trophy className="w-5 h-5 text-accent" />
-          <h1 className="font-display font-bold text-xl text-text">Top 100</h1>
-        </div>
-      </div>
-
-      <div className="flex-1 px-4 py-4 pb-24 overflow-auto">
-        {loading ? (
+    <div className="flex-1 px-4 pt-4 pb-24 overflow-auto max-w-lg mx-auto">
+      {loading ? (
           <div className="space-y-2">
             {[...Array(10)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-card pulse" />)}
           </div>
@@ -72,7 +64,6 @@ export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite }:
             ))}
           </div>
         )}
-      </div>
     </div>
   )
 }

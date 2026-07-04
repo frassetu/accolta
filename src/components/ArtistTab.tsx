@@ -69,42 +69,35 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
 
   return (
     <div className="flex flex-col min-h-screen bg-bg max-w-lg mx-auto">
-      {/* Header */}
-      <div className="px-4 pt-4 pb-3 border-b border-border sticky top-[72px] bg-bg z-10">
-        {view === 'list' ? (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-              <Music2 className="w-4 h-4 text-white" />
+      {/* Header contextuel : uniquement affiché quand on navigue dans un artiste/album,
+          le titre "Artisti" de la liste racine est lui affiché dans le bandeau global. */}
+      {view !== 'list' && (
+        <div className="px-4 pt-4 pb-3 border-b border-border sticky top-[100px] bg-bg z-10">
+          {view === 'albums' && selectedArtist ? (
+            <div className="flex items-center gap-3">
+              <button onClick={() => { setView('list'); setSelectedArtist(null) }}
+                className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
+                <ChevronLeft className="w-5 h-5 text-text" />
+              </button>
+              <div className="min-w-0">
+                <h2 className="font-display font-bold text-text truncate">{selectedArtist}</h2>
+                <p className="text-muted text-xs">{artistAlbums.length} album{artistAlbums.length > 1 ? 's' : ''}</p>
+              </div>
             </div>
-            <span className="font-display font-bold text-text text-lg">Artisti</span>
-            {!loading && (
-              <span className="text-xs text-muted ml-auto">{artists.length} artistes</span>
-            )}
-          </div>
-        ) : view === 'albums' && selectedArtist ? (
-          <div className="flex items-center gap-3">
-            <button onClick={() => { setView('list'); setSelectedArtist(null) }}
-              className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
-              <ChevronLeft className="w-5 h-5 text-text" />
-            </button>
-            <div className="min-w-0">
-              <h2 className="font-display font-bold text-text truncate">{selectedArtist}</h2>
-              <p className="text-muted text-xs">{artistAlbums.length} album{artistAlbums.length > 1 ? 's' : ''}</p>
+          ) : view === 'songs' && selectedArtist && selectedAlbum ? (
+            <div className="flex items-center gap-3">
+              <button onClick={() => { setView('albums'); setSelectedAlbum(null) }}
+                className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
+                <ChevronLeft className="w-5 h-5 text-text" />
+              </button>
+              <div className="min-w-0">
+                <p className="text-muted text-xs">{selectedArtist}</p>
+                <h2 className="font-display font-bold text-text truncate">{selectedAlbum || 'Sans album'}</h2>
+              </div>
             </div>
-          </div>
-        ) : view === 'songs' && selectedArtist && selectedAlbum ? (
-          <div className="flex items-center gap-3">
-            <button onClick={() => { setView('albums'); setSelectedAlbum(null) }}
-              className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
-              <ChevronLeft className="w-5 h-5 text-text" />
-            </button>
-            <div className="min-w-0">
-              <p className="text-muted text-xs">{selectedArtist}</p>
-              <h2 className="font-display font-bold text-text truncate">{selectedAlbum || 'Sans album'}</h2>
-            </div>
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-auto px-4 py-4 pb-24">
@@ -117,6 +110,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
         {/* ARTISTES LIST */}
         {!loading && view === 'list' && (
           <div>
+            <p className="text-xs text-muted mb-3">{artists.length} artistes</p>
             {artists.length === 0 && (
               <p className="text-center text-muted py-10">Aucun artiste trouvé</p>
             )}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Heart } from 'lucide-react'
 import { supabase, Song } from '@/lib/supabase'
 import SongCard from './SongCard'
 
@@ -36,11 +35,6 @@ export default function FavoritesTab({ favorites, onSelectSong, onToggleFavorite
 
   return (
     <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <Heart className="w-6 h-6 text-[#FC5C7C]" fill="#FC5C7C" />
-        <h1 className="font-display font-bold text-xl text-text">Mes favoris</h1>
-      </div>
-
       {loading ? (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-card pulse" />)}
