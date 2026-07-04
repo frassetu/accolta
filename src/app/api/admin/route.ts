@@ -71,7 +71,9 @@ export async function POST(req: NextRequest) {
       album: r['Dischettu'] || r['Album'] || '',
       titre: r['Titulu'] || r['Titre'] || '',
       annee: r['Annata'] || r['Annee'] ? parseInt(r['Annata'] || r['Annee']) : null,
-      numero: r['Numeru'] || r['Numero'] ? parseInt(r['Numeru'] || r['Numero']) : null,
+      numero: (r['Numeru'] || r['Numero'] || r['N°'] || r['No'] || r['N'])
+        ? parseInt(r['Numeru'] || r['Numero'] || r['N°'] || r['No'] || r['N'])
+        : null,
       paroles: r['Parolle'] || r['Paroles'] || null,
     })).filter((r: any) => r.artiste && r.titre)
     const deduped = mapped.filter((r: any, i: number) =>
