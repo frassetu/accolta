@@ -153,6 +153,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
             <p className="text-text-muted text-sm truncate">{currentSong.artiste}</p>
             <h1 className="text-text font-bold text-lg leading-tight truncate">{currentSong.titre}</h1>
             <p className="text-text-muted text-sm truncate">
+              {(currentSong as any).numero ? `N°${(currentSong as any).numero} · ` : ''}
               {currentSong.album}{currentSong.annee ? ` · ${currentSong.annee}` : ''}
             </p>
           </div>
