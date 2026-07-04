@@ -35,7 +35,9 @@ export default function SongCard({ song, isFavorite, onSelect, onToggleFavorite,
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-text text-sm font-medium truncate leading-snug">{song.titre}</p>
+        <p className={`text-sm font-medium truncate leading-snug ${song.paroles ? 'text-text' : 'text-muted italic'}`}>
+          {song.titre}
+        </p>
         <p className="text-muted text-xs truncate">
           {song.artiste}{song.album ? ` · ${song.album}` : ''}
         </p>
