@@ -32,7 +32,7 @@ export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
   const showAdminEntry = isAdmin || revealed
 
   return (
-    <div className="px-4 pt-14 pb-4 max-w-lg mx-auto">
+    <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <User className="w-6 h-6 text-accent" />
         <h1 className="font-display font-bold text-xl text-text">Profil</h1>
