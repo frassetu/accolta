@@ -72,6 +72,15 @@ export default function App() {
 
   const selectedIdx = selectedSong ? songHistory.findIndex(s => s.id === selectedSong.id) : -1
 
+  const pageTitles: Record<Tab, string | undefined> = {
+    home: undefined,
+    search: undefined,
+    artists: 'Artisti',
+    top100: 'Top 100',
+    favorites: 'Mes favoris',
+    profile: 'Profil',
+  }
+
   return (
     <>
       {showSplash && <Splash onFinish={() => setShowSplash(false)} />}
@@ -91,9 +100,9 @@ export default function App() {
         />
       ) : (
         <>
-          <TopBar />
+          <TopBar title={pageTitles[activeTab]} />
           <div className="flex flex-col min-h-screen bg-bg">
-            <div className="flex-1 pt-[72px] pb-20">
+            <div className="flex-1 pt-[100px] pb-20">
               {activeTab === 'home' && (
                 <HomeTab
                   favorites={favorites}
