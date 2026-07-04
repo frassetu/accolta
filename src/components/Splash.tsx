@@ -7,7 +7,7 @@ interface Props {
 }
 
 // Durée d'affichage de l'écran de lancement avant de basculer sur l'appli.
-const SPLASH_DURATION_MS = 1300
+const SPLASH_DURATION_MS = 2500
 
 export default function Splash({ onFinish }: Props) {
   useEffect(() => {
