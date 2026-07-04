@@ -100,7 +100,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
   }
 
   return (
-    <div className="px-4 pt-12 pb-4 max-w-lg mx-auto">
+    <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
 
       {/* Search bar */}
       <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border mb-4">
