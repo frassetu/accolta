@@ -10,6 +10,8 @@ import SongDetail from '@/components/SongDetail'
 import BottomNav from '@/components/BottomNav'
 import AdminPanel from '@/components/AdminPanel'
 import Top100Tab from '@/components/Top100Tab'
+import TopBar from '@/components/TopBar'
+import Splash from '@/components/Splash'
 import { Song } from '@/lib/supabase'
 
 export type Tab = 'home' | 'search' | 'artists' | 'top100' | 'favorites' | 'profile'
@@ -28,6 +30,7 @@ export default function App() {
   const [favorites, setFavorites] = useState<number[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showSplash, setShowSplash] = useState(true)
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
     view: 'artists',
@@ -67,94 +70,97 @@ export default function App() {
     if (idx < songHistory.length - 1) setSelectedSong(songHistory[idx + 1])
   }
 
-  if (showAdmin) {
-    return (
-      <AdminPanel
-        onClose={() => setShowAdmin(false)}
-        isAdmin={isAdmin}
-        onLogin={() => {
-          setIsAdmin(true)
-          sessionStorage.setItem('accolta_admin', 'true')
-        }}
-        onLogout={() => {
-          setIsAdmin(false)
-          sessionStorage.removeItem('accolta_admin')
-        }}
-      />
-    )
-  }
-
   const selectedIdx = selectedSong ? songHistory.findIndex(s => s.id === selectedSong.id) : -1
 
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-bg">
-        <div className="flex-1 overflow-auto pb-20">
-          {activeTab === 'home' && (
-            <HomeTab
-              favorites={favorites}
-              onSelectSong={handleSelectSong}
-              onToggleFavorite={toggleFavorite}
-              onGoToSearch={() => setActiveTab('search')}
-            />
-          )}
-          {activeTab === 'search' && (
-            <SearchTab
-              favorites={favorites}
-              onSelectSong={handleSelectSong}
-              onToggleFavorite={toggleFavorite}
-              searchState={searchState}
-              onSearchStateChange={setSearchState}
-            />
-          )}
-          {activeTab === 'artists' && (
-            <ArtistTab
-              favorites={favorites}
-              onSelectSong={handleSelectSong}
-              onToggleFavorite={toggleFavorite}
-            />
-          )}
-          {activeTab === 'top100' && (
-            <Top100Tab
-              favorites={favorites}
-              onSelectSong={handleSelectSong}
-              onToggleFavorite={toggleFavorite}
-            />
-          )}
-          {activeTab === 'favorites' && (
-            <FavoritesTab
-              favorites={favorites}
-              onSelectSong={(s) => handleSelectSong(s)}
-              onToggleFavorite={toggleFavorite}
-            />
-          )}
-          {activeTab === 'profile' && (
-            <ProfileTab
-              isAdmin={isAdmin}
-              onOpenAdmin={() => setShowAdmin(true)}
-            />
-          )}
-        </div>
-        <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
-      </div>
+      {showSplash && <Splash onFinish={() => setShowSplash(false)} />}
 
-      {/* Vue paroles affichée en surimpression : les onglets restent montés
-          en dessous, ce qui préserve l'état de navigation (recherche, artiste,
-          album…) quand on revient en arrière depuis les paroles. */}
-      {selectedSong && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto bg-bg">
-          <SongDetail
-            song={selectedSong}
-            isFavorite={favorites.includes(selectedSong.id)}
-            onToggleFavorite={() => toggleFavorite(selectedSong.id)}
-            onBack={() => setSelectedSong(null)}
-            isAdmin={isAdmin}
-            hasPrev={selectedIdx > 0}
-            hasNext={selectedIdx >= 0 && selectedIdx < songHistory.length - 1}
-            onPrev={handlePrevSong}
-            onNext={handleNextSong}
-          />
-        </div>
+      {showAdmin ? (
+        <AdminPanel
+          onClose={() => setShowAdmin(false)}
+          isAdmin={isAdmin}
+          onLogin={() => {
+            setIsAdmin(true)
+            sessionStorage.setItem('accolta_admin', 'true')
+          }}
+          onLogout={() => {
+            setIsAdmin(false)
+            sessionStorage.removeItem('accolta_admin')
+          }}
+        />
+      ) : (
+        <>
+          <TopBar />
+          <div className="flex flex-col min-h-screen bg-bg">
+            <div className="flex-1 overflow-auto pt-[92px] pb-20">
+              {activeTab === 'home' && (
+                <HomeTab
+                  favorites={favorites}
+                  onSelectSong={handleSelectSong}
+                  onToggleFavorite={toggleFavorite}
+                  onGoToSearch={() => setActiveTab('search')}
+                />
+              )}
+              {activeTab === 'search' && (
+                <SearchTab
+                  favorites={favorites}
+                  onSelectSong={handleSelectSong}
+                  onToggleFavorite={toggleFavorite}
+                  searchState={searchState}
+                  onSearchStateChange={setSearchState}
+                />
+              )}
+              {activeTab === 'artists' && (
+                <ArtistTab
+                  favorites={favorites}
+                  onSelectSong={handleSelectSong}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
+              {activeTab === 'top100' && (
+                <Top100Tab
+                  favorites={favorites}
+                  onSelectSong={handleSelectSong}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
+              {activeTab === 'favorites' && (
+                <FavoritesTab
+                  favorites={favorites}
+                  onSelectSong={(s) => handleSelectSong(s)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
+              {activeTab === 'profile' && (
+                <ProfileTab
+                  isAdmin={isAdmin}
+                  onOpenAdmin={() => setShowAdmin(true)}
+                />
+              )}
+            </div>
+            <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+          </div>
+
+          {/* Vue paroles affichée en surimpression : les onglets restent montés
+              en dessous, ce qui préserve l'état de navigation (recherche, artiste,
+              album…) quand on revient en arrière depuis les paroles. */}
+          {selectedSong && (
+            <div className="fixed inset-0 z-[60] overflow-y-auto bg-bg">
+              <SongDetail
+                song={selectedSong}
+                isFavorite={favorites.includes(selectedSong.id)}
+                onToggleFavorite={() => toggleFavorite(selectedSong.id)}
+                onBack={() => setSelectedSong(null)}
+                isAdmin={isAdmin}
+                hasPrev={selectedIdx > 0}
+                hasNext={selectedIdx >= 0 && selectedIdx < songHistory.length - 1}
+                onPrev={handlePrevSong}
+                onNext={handleNextSong}
+              />
+            </div>
+          )}
+        </>
       )}
     </>
   )
