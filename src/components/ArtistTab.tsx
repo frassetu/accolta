@@ -5,6 +5,7 @@ import { ChevronLeft, Music2 } from 'lucide-react'
 import { Song } from '@/lib/supabase'
 import { getAllSongs } from '@/lib/songs'
 import { getColor, getInitials } from '@/lib/format'
+import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack'
 import SongCard from './SongCard'
 
 type View = 'list' | 'albums' | 'songs'
@@ -64,6 +65,13 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
     }
   }
 
+  // Retour d'un niveau : chansons -> albums -> liste des artistes.
+  const goBack = () => {
+    if (view === 'songs') { setView('albums'); setSelectedAlbum(null) }
+    else if (view === 'albums') { setView('list'); setSelectedArtist(null) }
+  }
+  const swipeBack = useEdgeSwipeBack(goBack)
+
   const grouped = artists.reduce<Record<string, ArtistInfo[]>>((acc, a) => {
     const letter = a.name[0]?.toUpperCase() || '#'
     if (!acc[letter]) acc[letter] = []
@@ -80,7 +88,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
     .sort((a, b) => (a.numero || 999) - (b.numero || 999))
 
   return (
-    <div className="flex flex-col bg-bg max-w-lg mx-auto">
+    <div className="flex flex-col bg-bg max-w-lg mx-auto" {...swipeBack}>
       {/* Header contextuel : uniquement affiché quand on navigue dans un artiste/album */}
       {view !== 'list' && (
         <div className="sticky top-[60px] px-4 pt-3 pb-3 border-b border-border bg-bg z-30">
