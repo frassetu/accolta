@@ -11,7 +11,7 @@ interface Props {
 export default function TopBar({ title }: Props) {
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-bg border-b border-border">
-      <div className="max-w-lg mx-auto flex items-center justify-between gap-3 px-4 pt-6 pb-3">
+      <div className="max-w-lg mx-auto flex items-center justify-between gap-3 px-4 pt-1 pb-3">
         <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
           <img src="/icon-192.png" alt="" className="w-11 h-11 rounded-xl flex-shrink-0" />
           <img src="/logo-wordmark-transparent.png" alt="Vogliu Cantà !" className="h-16 w-auto" />
