@@ -150,7 +150,7 @@ export default function App() {
               {activeTab === 'favorites' && (
                 <FavoritesTab
                   favorites={favorites}
-                  onSelectSong={(s) => handleSelectSong(s)}
+                  onSelectSong={handleSelectSong}
                   onToggleFavorite={toggleFavorite}
                 />
               )}
