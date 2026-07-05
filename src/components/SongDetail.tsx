@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, Heart, Music, ChevronRight, Flag, Send, Pencil, Trash2, Loader, Music2 } from 'lucide-react'
 import { Song, trackView } from '@/lib/supabase'
 import { getColor, getInitials } from '@/lib/format'
@@ -39,6 +39,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     trackView(song.id)
@@ -116,30 +117,61 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
     onBack()
   }
 
+  // Navigation par glissement (swipe) : gauche â chanson suivante, droite â prÃ©cÃ©dente.
+  // On exige que le mouvement horizontal domine nettement le vertical pour ne pas
+  // interfÃ©rer avec le dÃ©filement normal des paroles.
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touchStart.current.x
+    const dy = t.clientY - touchStart.current.y
+    touchStart.current = null
+    const SWIPE_THRESHOLD = 60
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    if (dx < 0 && hasNext) onNext()
+    else if (dx > 0 && hasPrev) onPrev()
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-bg max-w-lg mx-auto">
+    <div
+      className="relative flex flex-col min-h-screen bg-bg max-w-lg mx-auto"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+
+      {/* FlÃ¨ches de navigation fixes sur les bords, toujours accessibles */}
+      {hasPrev && (
+        <button
+          onClick={onPrev}
+          aria-label="Chanson prÃ©cÃ©dente"
+          className="fixed left-2 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-card/90 border border-border backdrop-blur flex items-center justify-center shadow-lg"
+        >
+          <ChevronLeft className="w-6 h-6 text-text" />
+        </button>
+      )}
+      {hasNext && (
+        <button
+          onClick={onNext}
+          aria-label="Chanson suivante"
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-card/90 border border-border backdrop-blur flex items-center justify-center shadow-lg"
+        >
+          <ChevronRight className="w-6 h-6 text-text" />
+        </button>
+      )}
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-14 pb-3">
-        <div className="flex items-center gap-2">
-          <button onClick={onBack} className="w-9 h-9 rounded-xl bg-card flex items-center justify-center">
-            <ChevronLeft className="w-5 h-5 text-text" />
-          </button>
-          <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-            <Music2 className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="font-display font-bold text-text text-sm">Vogliu Cantà !</span>
+      <div className="flex items-center gap-2 px-4 pt-14 pb-3">
+        <button onClick={onBack} className="w-9 h-9 rounded-xl bg-card flex items-center justify-center">
+          <ChevronLeft className="w-5 h-5 text-text" />
+        </button>
+        <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+          <Music2 className="w-3.5 h-3.5 text-white" />
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={onPrev} disabled={!hasPrev}
-            className={`w-9 h-9 rounded-xl bg-card flex items-center justify-center transition-opacity ${!hasPrev ? 'opacity-30' : ''}`}>
-            <ChevronLeft className="w-5 h-5 text-text" />
-          </button>
-          <button onClick={onNext} disabled={!hasNext}
-            className={`w-9 h-9 rounded-xl bg-card flex items-center justify-center transition-opacity ${!hasNext ? 'opacity-30' : ''}`}>
-            <ChevronRight className="w-5 h-5 text-text" />
-          </button>
-        </div>
+        <span className="font-display font-bold text-text text-sm">Vogliu CantÃ  !</span>
       </div>
 
       {/* Song header */}
@@ -153,8 +185,8 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
             <p className="text-text-muted text-sm truncate">{currentSong.artiste}</p>
             <h1 className="text-text font-bold text-lg leading-tight truncate">{currentSong.titre}</h1>
             <p className="text-text-muted text-sm truncate">
-              {(currentSong as any).numero ? `N°${(currentSong as any).numero} · ` : ''}
-              {currentSong.album}{currentSong.annee ? ` · ${currentSong.annee}` : ''}
+              {(currentSong as any).numero ? `NÂ°${(currentSong as any).numero} Â· ` : ''}
+              {currentSong.album}{currentSong.annee ? ` Â· ${currentSong.annee}` : ''}
             </p>
           </div>
           <button onClick={onToggleFavorite} className="p-1 flex-shrink-0">
@@ -167,7 +199,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
       <div className="flex-1 px-4 pb-10 overflow-auto">
         <div className="flex items-center gap-2 mb-4">
           <button onClick={() => updateFontSize(Math.max(12, fontSize - 2))}
-            className="w-8 h-8 rounded-lg bg-card flex items-center justify-center text-text font-bold">−</button>
+            className="w-8 h-8 rounded-lg bg-card flex items-center justify-center text-text font-bold">â</button>
           <span className="text-sm text-muted">Taille</span>
           <button onClick={() => updateFontSize(Math.min(32, fontSize + 2))}
             className="w-8 h-8 rounded-lg bg-card flex items-center justify-center text-text font-bold">+</button>
@@ -231,8 +263,8 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
                     { key: 'artiste', label: 'Artiste *', placeholder: 'Artiste' },
                     { key: 'titre', label: 'Titre *', placeholder: 'Titre' },
                     { key: 'album', label: 'Album', placeholder: 'Album' },
-                    { key: 'annee', label: 'Année', placeholder: '2024' },
-                    { key: 'numero', label: 'N° piste', placeholder: '1' },
+                    { key: 'annee', label: 'AnnÃ©e', placeholder: '2024' },
+                    { key: 'numero', label: 'NÂ° piste', placeholder: '1' },
                   ].map(({ key, label, placeholder }) => (
                     <div key={key}>
                       <label className="text-text-muted text-xs mb-1 block">{label}</label>
@@ -270,8 +302,8 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
               <>
                 {modalSent ? (
                   <div className="text-center py-4">
-                    <p className="text-2xl mb-2">✅</p>
-                    <p className="font-display font-semibold text-text">Envoyé, merci !</p>
+                    <p className="text-2xl mb-2">â</p>
+                    <p className="font-display font-semibold text-text">EnvoyÃ©, merci !</p>
                   </div>
                 ) : (
                   <>
@@ -284,7 +316,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
                     <textarea
                       value={modalText}
                       onChange={e => setModalText(e.target.value)}
-                      placeholder={modal === 'report' ? 'Décris l\'erreur…' : 'Colle les paroles ici…'}
+                      placeholder={modal === 'report' ? 'DÃ©cris l\'erreurâ¦' : 'Colle les paroles iciâ¦'}
                       rows={6}
                       className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted resize-none focus:border-accent"
                     />
