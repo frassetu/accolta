@@ -14,7 +14,7 @@ export default function TopBar({ title }: Props) {
       <div className="max-w-lg mx-auto flex items-center justify-between gap-3 px-4 pt-1 pb-1">
         <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
           <img src="/icon-192.png" alt="" className="w-10 h-10 rounded-xl flex-shrink-0" />
-          <img src="/logo-wordmark-transparent.png" alt="Vogliu Cantà !" className="h-15 w-auto" />
+          <img src="/logo-wordmark-transparent.png" alt="Vogliu Cantà !" className="h-12 w-auto" />
         </div>
         {title && (
           <span className="font-display font-semibold text-text text-sm truncate">{title}</span>
