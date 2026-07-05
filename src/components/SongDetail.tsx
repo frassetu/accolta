@@ -138,7 +138,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
 
   return (
     <div
-      className="relative flex flex-col min-h-full bg-bg max-w-lg mx-auto"
+      className="relative flex flex-col bg-bg max-w-lg mx-auto"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
