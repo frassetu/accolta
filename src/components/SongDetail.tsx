@@ -39,7 +39,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const touchStart = useRef<{ x: number; y: number; edge: boolean } | null>(null)
 
   useEffect(() => {
     trackView(song.id)
@@ -117,21 +117,27 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
     onBack()
   }
 
-  // Navigation par glissement (swipe) : gauche → chanson suivante, droite → précédente.
-  // On exige que le mouvement horizontal domine nettement le vertical pour ne pas
-  // interférer avec le défilement normal des paroles.
+  // Glissement (swipe) : un glissement démarrant depuis le bord gauche de
+  // l'écran déclenche le retour (comme le geste natif iOS/Android). Un
+  // glissement démarrant ailleurs sur l'écran navigue entre chansons du
+  // même album : gauche → suivante, droite → précédente. On exige que le
+  // mouvement horizontal domine nettement le vertical pour ne pas interférer
+  // avec le défilement normal des paroles.
+  const EDGE_ZONE = 24
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0]
-    touchStart.current = { x: t.clientX, y: t.clientY }
+    touchStart.current = { x: t.clientX, y: t.clientY, edge: t.clientX <= EDGE_ZONE }
   }
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart.current) return
-    const t = e.changedTouches[0]
-    const dx = t.clientX - touchStart.current.x
-    const dy = t.clientY - touchStart.current.y
+    const start = touchStart.current
     touchStart.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
     const SWIPE_THRESHOLD = 60
     if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    if (start.edge && dx > 0) { onBack(); return }
     if (dx < 0 && hasNext) onNext()
     else if (dx > 0 && hasPrev) onPrev()
   }
