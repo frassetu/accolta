@@ -1,0 +1,71 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Trophy } from 'lucide-react'
+import { supabase, Song } from '@/lib/supabase'
+import SongCard from './SongCard'
+
+interface Props {
+  favorites: number[]
+  onSelectSong: (s: Song, playlist?: Song[]) => void
+  onToggleFavorite: (id: number) => void
+}
+
+export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite }: Props) {
+  const [songs, setSongs] = useState<{ song: Song; count: number }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const { data } = await supabase
+        .from('chansons')
+        .select('*')
+        .gt('view_count', 0)
+        .not('paroles', 'is', null)
+        .neq('paroles', '')
+        .order('view_count', { ascending: false })
+        .limit(100)
+      if (data) {
+        setSongs(data.map(song => ({ song, count: song.view_count || 0 })))
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const playlist = songs.map(s => s.song)
+
+  return (
+    <div className="flex-1 px-4 pt-2 pb-24 overflow-auto max-w-lg mx-auto">
+      {loading ? (
+          <div className="space-y-2">
+            {[...Array(10)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-card pulse" />)}
+          </div>
+        ) : songs.length === 0 ? (
+          <div className="text-center py-20 text-muted">
+            <Trophy className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="font-medium text-text">Aucune consultation pour l'instant</p>
+            <p className="text-sm mt-1">Le classement apparaîtra après avoir consulté des paroles</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {songs.map(({ song, count }, i) => (
+              <div key={song.id} className="relative">
+                <SongCard
+                  song={song}
+                  rank={i + 1}
+                  isFavorite={favorites.includes(song.id)}
+                  onSelect={() => onSelectSong(song, playlist)}
+                  onToggleFavorite={() => onToggleFavorite(song.id)}
+                />
+                <span className="absolute right-12 top-1/2 -translate-y-1/2 text-xs text-muted">
+                  {count} vue{count > 1 ? 's' : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+    </div>
+  )
+}
