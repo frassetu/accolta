@@ -44,7 +44,20 @@ export default function App() {
     const admin = sessionStorage.getItem('accolta_admin')
     if (admin === 'true') setIsAdmin(true)
   }, [])
-
+  
+// Empêche la page sous-jacente (onglet Artiste/Album, etc.) de rester
+  // scrollable pendant que la vue paroles est ouverte en surimpression :
+  // sinon la barre de défilement affichée reflète la hauteur de la page
+  // du dessous (potentiellement longue) et pas celle des paroles affichées.
+  useEffect(() => {
+    if (selectedSong) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [selectedSong])
+  
   const toggleFavorite = (id: number) => {
     setFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
