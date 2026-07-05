@@ -1,4 +1,4 @@
-'use client'
+use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { X, ChevronLeft, Music2 } from 'lucide-react'
@@ -25,13 +25,20 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
 
   const { query, view, selectedArtist, selectedAlbum } = searchState
 
+  // Construit la liste de navigation PrÃ©cÃ©dent/Suivant : les chansons du mÃªme
+  // album que celle sÃ©lectionnÃ©e (et non l'ensemble des rÃ©sultats de recherche).
+  const albumPlaylist = (song: Song) =>
+    allSongs
+      .filter(s => s.artiste === song.artiste && s.album === song.album)
+      .sort((a, b) => (a.numero || 999) - (b.numero || 999))
+
   // Autofocus the input every time this tab is shown, so the keyboard
   // opens immediately - no need to tap "rechercher" a second time.
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  // Load every song once (cache partagé entre onglets), and precompute
+  // Load every song once (cache partagÃ© entre onglets), and precompute
   // accent-free versions of each field so filtering on every keystroke stays instant.
   useEffect(() => {
     let cancelled = false
@@ -54,7 +61,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
 
   const nq = normalize(query)
 
-  // Priorité 1 : artistes dont le nom correspond -> on entre dans l'artiste
+  // PrioritÃ© 1 : artistes dont le nom correspond -> on entre dans l'artiste
   const artistMatches = useMemo(() => {
     if (!nq) return []
     const names = new Set<string>()
@@ -65,13 +72,13 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
     }))
   }, [allSongs, nq])
 
-  // Priorité 2 : chansons dont le titre (ou l'album) correspond
+  // PrioritÃ© 2 : chansons dont le titre (ou l'album) correspond
   const titleMatches = useMemo(() => {
     if (!nq) return []
     return allSongs.filter(s => s._nTitre.includes(nq) || s._nAlbum.includes(nq))
   }, [allSongs, nq])
 
-  // Priorité 3 : chansons dont les paroles contiennent le mot (et qui ne sont pas déjà affichées au-dessus)
+  // PrioritÃ© 3 : chansons dont les paroles contiennent le mot (et qui ne sont pas dÃ©jÃ  affichÃ©es au-dessus)
   const lyricsMatches = useMemo(() => {
     if (!nq) return []
     const titleIds = new Set(titleMatches.map(s => s.id))
@@ -80,7 +87,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
 
   const noResults = nq && artistMatches.length === 0 && titleMatches.length === 0 && lyricsMatches.length === 0
 
-  // Drilldown dans un artiste (identique à la page Artistes)
+  // Drilldown dans un artiste (identique Ã  la page Artistes)
   const artistAlbums = selectedArtist
     ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist).map(s => s.album))).sort()
     : []
@@ -111,7 +118,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
           ref={inputRef}
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Artiste, titre, album, paroles…"
+          placeholder="Artiste, titre, album, parolesâ¦"
           className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted"
         />
         {query && (
@@ -140,7 +147,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
           </button>
           <span className="text-sm text-text-muted truncate">
             {view === 'albums' && selectedArtist}
-            {view === 'songs' && `${selectedArtist} › ${selectedAlbum || 'Sans album'}`}
+            {view === 'songs' && `${selectedArtist} âº ${selectedAlbum || 'Sans album'}`}
           </span>
         </div>
       )}
@@ -154,7 +161,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
       {/* RESULTATS GROUPES */}
       {!loading && view === 'artists' && query && (
         <div className="space-y-5">
-          {noResults && <p className="text-center text-muted py-10">Aucun résultat</p>}
+          {noResults && <p className="text-center text-muted py-10">Aucun rÃ©sultat</p>}
 
           {artistMatches.length > 0 && (
             <div>
@@ -193,7 +200,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
                     key={song.id}
                     song={song}
                     isFavorite={favorites.includes(song.id)}
-                    onSelect={() => onSelectSong(song, titleMatches)}
+                    onSelect={() => onSelectSong(song, albumPlaylist(song))}
                     onToggleFavorite={() => onToggleFavorite(song.id)}
                   />
                 ))}
@@ -210,7 +217,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
                     key={song.id}
                     song={song}
                     isFavorite={favorites.includes(song.id)}
-                    onSelect={() => onSelectSong(song, lyricsMatches)}
+                    onSelect={() => onSelectSong(song, albumPlaylist(song))}
                     onToggleFavorite={() => onToggleFavorite(song.id)}
                   />
                 ))}
@@ -220,7 +227,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
         </div>
       )}
 
-      {/* ALBUMS de l'artiste sélectionné */}
+      {/* ALBUMS de l'artiste sÃ©lectionnÃ© */}
       {!loading && view === 'albums' && selectedArtist && (
         <div className="space-y-2">
           {artistAlbums.map(album => {
@@ -245,7 +252,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
         </div>
       )}
 
-      {/* CHANSONS de l'album sélectionné, classées par n° de piste */}
+      {/* CHANSONS de l'album sÃ©lectionnÃ©, classÃ©es par nÂ° de piste */}
       {!loading && view === 'songs' && (
         <div className="space-y-2">
           {albumSongs.map(song => (
