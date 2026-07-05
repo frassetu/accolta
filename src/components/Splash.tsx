@@ -18,7 +18,7 @@ export default function Splash({ onFinish }: Props) {
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center gap-6 fade-in">
       <img src="/icon-192.png" alt="" className="w-32 h-32 rounded-2xl" />
-      <img src="/logo-wordmark.png" alt="Vogliu Cantà !" className="w-full max-w-[420px] h-auto px-10" />
+      <img src="/logo-wordmark.png" alt="Vogliu Cantà !" className="w-full max-w-[420px] h-auto px-6" />
     </div>
   )
 }
