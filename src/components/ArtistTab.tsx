@@ -83,7 +83,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
     <div className="flex flex-col bg-bg max-w-lg mx-auto">
       {/* Header contextuel : uniquement affiché quand on navigue dans un artiste/album */}
       {view !== 'list' && (
-        <div className="px-4 pt-3 pb-3 border-b border-border bg-bg z-30">
+        <div className="sticky top-[60px] px-4 pt-3 pb-3 border-b border-border bg-bg z-30">
           {view === 'albums' && selectedArtist ? (
             <div className="flex items-center gap-3">
               <button onClick={() => { setView('list'); setSelectedArtist(null) }}
