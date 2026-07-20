@@ -156,25 +156,31 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setExporting(false)
   }
 
+  // Normalise les apostrophes (droite ' vs typographique ' / ') : Excel
+  // convertit parfois automatiquement l'une en l'autre à l'import, ce qui
+  // faisait échouer la comparaison entre ce qui est tapé et ce qui est
+  // stocké en base pour des noms comme "L'Arcusgi".
+  const normalizeApostrophe = (s: string) => s.replace(/[\u2018\u2019\u02BC]/g, "'")
+
   const searchArtists = (val: string) => {
-    const safe = sanitizeSearch(val).toLowerCase()
+    const safe = normalizeApostrophe(sanitizeSearch(val)).toLowerCase()
     if (!safe) { setArtistSuggestions([]); return }
     const uniqueArtists = Array.from(new Set(allSongsCache.map((s) => s.artiste)))
     setArtistSuggestions(
-      uniqueArtists.filter((a) => a.toLowerCase().startsWith(safe)).sort().slice(0, 8)
+      uniqueArtists.filter((a) => normalizeApostrophe(a).toLowerCase().startsWith(safe)).sort().slice(0, 8)
     )
   }
 
   const searchAlbums = (val: string, artiste: string) => {
-    const safe = sanitizeSearch(val).toLowerCase()
+    const safe = normalizeApostrophe(sanitizeSearch(val)).toLowerCase()
     if (!safe) { setAlbumSuggestions([]); return }
-    const safeArtiste = sanitizeSearch(artiste).toLowerCase()
+    const safeArtiste = normalizeApostrophe(sanitizeSearch(artiste)).toLowerCase()
     const relevant = safeArtiste
-      ? allSongsCache.filter((s) => s.artiste.toLowerCase().includes(safeArtiste))
+      ? allSongsCache.filter((s) => normalizeApostrophe(s.artiste).toLowerCase().includes(safeArtiste))
       : allSongsCache
     const uniqueAlbums = Array.from(new Set(relevant.map((s) => s.album).filter(Boolean))) as string[]
     setAlbumSuggestions(
-      uniqueAlbums.filter((a) => a.toLowerCase().startsWith(safe)).sort().slice(0, 8)
+      uniqueAlbums.filter((a) => normalizeApostrophe(a).toLowerCase().startsWith(safe)).sort().slice(0, 8)
     )
   }
 
