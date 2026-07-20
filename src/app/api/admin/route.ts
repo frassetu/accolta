@@ -84,9 +84,18 @@ export async function POST(req: NextRequest) {
         : null,
       paroles: r['Parolle'] || r['Paroles'] || null,
     })).filter((r: any) => r.artiste && r.titre)
-    const { data, error } = await supabase.from('chansons').upsert(mapped, { onConflict: 'artiste,titre,album' })
+    // PostgreSQL refuse qu'une même commande upsert touche deux fois la
+    // même ligne cible : on ne peut donc garder qu'UNE ligne par
+    // (artiste, titre, album) exact dans un même envoi. Ça ne concerne que
+    // les vrais doublons (ligne strictement identique) — une même chanson
+    // sur un album différent a un album différent, donc n'est pas touchée.
+    const exactDupKey = (r: any) => `${r.artiste}|||${r.titre}|||${r.album}`
+    const seen = new Map<string, any>()
+    for (const r of mapped) seen.set(exactDupKey(r), r) // garde la dernière occurrence
+    const deduped = Array.from(seen.values())
+    const { data, error } = await supabase.from('chansons').upsert(deduped, { onConflict: 'artiste,titre,album' })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ total_in_file: rows.length, inserted: mapped.length, errors: [] })
+    return NextResponse.json({ total_in_file: rows.length, inserted: deduped.length, errors: [] })
   }
 
   const body = await req.json()
