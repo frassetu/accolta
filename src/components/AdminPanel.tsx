@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Plus, Pencil, Trash2, Upload, Search, ChevronLeft, Eye, EyeOff, LogOut, CheckCircle, AlertCircle, Loader, X, Download, Music2 } from 'lucide-react'
 import { supabase, Song } from '@/lib/supabase'
 import { sanitizeSearch } from '@/lib/format'
-import { invalidateSongs } from '@/lib/songs'
+import { invalidateSongs, getAllSongs } from '@/lib/songs'
 import TopBar from './TopBar'
 
 interface Props {
@@ -32,7 +32,7 @@ interface MissingAlbum { name: string; count: number }
 type ImportStatus =
   | { state: 'idle' }
   | { state: 'uploading' }
-  | { state: 'done'; total_in_file: number; after_dedup: number; inserted: number; errors: string[] }
+  | { state: 'done'; total_in_file: number; inserted: number; errors: string[] }
   | { state: 'error'; message: string }
 
 const emptyForm = { artiste: '', album: '', numero: '', titre: '', annee: '', paroles: '' }
@@ -63,12 +63,12 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const [showArtistSug, setShowArtistSug] = useState(false)
   const [showAlbumSug, setShowAlbumSug] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [allSongsCache, setAllSongsCache] = useState<Song[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
-
   const [loggingIn, setLoggingIn] = useState(false)
 
   useEffect(() => {
-    if (isAdmin) { loadSongs(); loadStats(); loadMissing() }
+    if (isAdmin) { loadSongs(); loadStats(); loadMissing(); getAllSongs().then(setAllSongsCache) }
   }, [isAdmin])
 
   const loadMissing = async () => {
@@ -156,21 +156,26 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setExporting(false)
   }
 
-  const searchArtists = async (val: string) => {
-    const safe = sanitizeSearch(val)
+  const searchArtists = (val: string) => {
+    const safe = sanitizeSearch(val).toLowerCase()
     if (!safe) { setArtistSuggestions([]); return }
-    const { data } = await supabase.from('chansons').select('artiste').ilike('artiste', `${safe}%`).limit(8)
-    if (data) setArtistSuggestions(Array.from(new Set(data.map((r) => r.artiste))))
+    const uniqueArtists = Array.from(new Set(allSongsCache.map((s) => s.artiste)))
+    setArtistSuggestions(
+      uniqueArtists.filter((a) => a.toLowerCase().startsWith(safe)).sort().slice(0, 8)
+    )
   }
 
-  const searchAlbums = async (val: string, artiste: string) => {
-    const safe = sanitizeSearch(val)
+  const searchAlbums = (val: string, artiste: string) => {
+    const safe = sanitizeSearch(val).toLowerCase()
     if (!safe) { setAlbumSuggestions([]); return }
-    const safeArtiste = sanitizeSearch(artiste)
-    let q = supabase.from('chansons').select('album').ilike('album', `${safe}%`).limit(8)
-    if (safeArtiste) q = q.ilike('artiste', `%${safeArtiste}%`)
-    const { data } = await q
-    if (data) setAlbumSuggestions(Array.from(new Set(data.map((r) => r.album).filter(Boolean))))
+    const safeArtiste = sanitizeSearch(artiste).toLowerCase()
+    const relevant = safeArtiste
+      ? allSongsCache.filter((s) => s.artiste.toLowerCase().includes(safeArtiste))
+      : allSongsCache
+    const uniqueAlbums = Array.from(new Set(relevant.map((s) => s.album).filter(Boolean))) as string[]
+    setAlbumSuggestions(
+      uniqueAlbums.filter((a) => a.toLowerCase().startsWith(safe)).sort().slice(0, 8)
+    )
   }
 
   const handleLogin = async () => {
@@ -285,7 +290,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       setImportStatus({
         state: 'done',
         total_in_file: result.total_in_file,
-        after_dedup: result.after_dedup,
         inserted: result.inserted,
         errors: result.errors || [],
       })
@@ -582,7 +586,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
           <div className="space-y-4 pb-10">
             <div>
               <h2 className="font-display font-semibold text-text mb-1">Importer un fichier Excel</h2>
-              <p className="text-text-muted text-sm">Les doublons sont detectes automatiquement.</p>
+              <p className="text-text-muted text-sm">Toutes les lignes du fichier sont importées, sans suppression de doublons.</p>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-xs space-y-1">
               <p className="text-text-muted font-medium mb-2">Colonnes reconnues :</p>
@@ -615,7 +619,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                 </div>
                 <div className="space-y-1 text-sm">
                   <p className="text-text-muted">Lignes : <span className="text-text font-medium">{importStatus.total_in_file}</span></p>
-                  <p className="text-text-muted">Après dédoublonnage : <span className="text-text font-medium">{importStatus.after_dedup}</span></p>
                   <p className="text-text-muted">Importées : <span className="text-green-400 font-medium">{importStatus.inserted}</span></p>
                 </div>
                 {importStatus.errors.map((e, i) => <p key={i} className="text-yellow-400 text-xs">{e}</p>)}
