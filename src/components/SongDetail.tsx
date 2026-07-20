@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { ChevronLeft, Heart, Music, Flag, Send, Pencil, Trash2, Loader } from 'lucide-react'
 import TopBar from './TopBar'
 import { Song, trackView } from '@/lib/supabase'
@@ -144,7 +144,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
 
   return (
     <div
-      className="relative flex flex-col bg-bg max-w-lg mx-auto"
+      className="relative flex flex-col min-h-full bg-bg max-w-lg mx-auto"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -211,8 +211,13 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
         </div>
 
         {currentSong.paroles ? (
-          <div className="whitespace-pre-line text-text" style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
-            {currentSong.paroles}
+          <div className="text-text" style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
+            {currentSong.paroles.split('\n').map((line, i, arr) => (
+              <Fragment key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </Fragment>
+            ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center text-muted mt-20">
