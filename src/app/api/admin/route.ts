@@ -84,19 +84,16 @@ export async function POST(req: NextRequest) {
         : null,
       paroles: r['Parolle'] || r['Paroles'] || null,
     })).filter((r: any) => r.artiste && r.titre)
-    const deduped = mapped.filter((r: any, i: number) =>
-      mapped.findIndex((x: any) => x.artiste === r.artiste && x.titre === r.titre) === i
-    )
-    const { data, error } = await supabase.from('chansons').upsert(deduped, { onConflict: 'artiste,titre' })
+    const { data, error } = await supabase.from('chansons').upsert(mapped, { onConflict: 'artiste,titre,album' })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ total_in_file: rows.length, after_dedup: deduped.length, inserted: deduped.length, errors: [] })
+    return NextResponse.json({ total_in_file: rows.length, inserted: mapped.length, errors: [] })
   }
 
   const body = await req.json()
   const { action, id, ...fields } = body
 
   if (action === 'upsert') {
-    const { error } = await supabase.from('chansons').upsert(fields, { onConflict: 'artiste,titre' })
+    const { error } = await supabase.from('chansons').upsert(fields, { onConflict: 'artiste,titre,album' })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   }
