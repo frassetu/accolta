@@ -3,6 +3,22 @@
     {
       "path": "/api/keep-alive",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/sync-sheet",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/sync-sheet",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/sync-sheet",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/sync-sheet",
+      "schedule": "0 0 * * *"
     }
   ]
 }
