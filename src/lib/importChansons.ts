@@ -9,7 +9,7 @@ export async function importRows(rows: any[]) {
     numero: (r['Numeru'] || r['Numero'] || r['N°'] || r['No'] || r['N'])
       ? parseInt(r['Numeru'] || r['Numero'] || r['N°'] || r['No'] || r['N'])
       : null,
-    paroles: r['Parolle'] || r['Paroles'] || null,
+ paroles: r['Paroddi'] || r['Parolle'] || r['Paroles'] || null,
   })).filter((r: any) => r.artiste && r.titre)
   const exactDupKey = (r: any) => `${r.artiste}|||${r.titre}|||${r.album}`
   const seen = new Map<string, any>()
