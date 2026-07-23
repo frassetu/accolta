@@ -307,6 +307,30 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     }
   }
 
+  const handleSyncSheet = async () => {
+    setImportStatus({ state: 'uploading' })
+    try {
+      const res = await fetch('/api/sync-sheet')
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erreur serveur' }))
+        setImportStatus({ state: 'error', message: err.error || 'Erreur serveur' })
+        return
+      }
+      const result = await res.json()
+      setImportStatus({
+        state: 'done',
+        total_in_file: result.total_in_file,
+        inserted: result.inserted,
+        errors: result.errors || [],
+      })
+      invalidateSongs()
+      loadStats()
+      loadSongs()
+    } catch (err: any) {
+      setImportStatus({ state: 'error', message: err.message || 'Erreur inconnue' })
+    }
+  }
+  
   // Login screen
   if (!isAdmin) {
     return (
@@ -588,11 +612,22 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         )}
 
         {/* IMPORT */}
-        {tab === 'import' && (
+       {tab === 'import' && (
           <div className="space-y-4 pb-10">
             <div>
-              <h2 className="font-display font-semibold text-text mb-1">Importer un fichier Excel</h2>
-              <p className="text-text-muted text-sm">Toutes les lignes du fichier sont importées, sans suppression de doublons.</p>
+              <h2 className="font-display font-semibold text-text mb-1">Synchroniser depuis Google Sheets</h2>
+              <p className="text-text-muted text-sm">Se synchronise automatiquement 4 fois par jour. Vous pouvez aussi forcer une synchro immédiate ci-dessous.</p>
+            </div>
+            {(importStatus.state === 'idle' || importStatus.state === 'error') && (
+              <button onClick={handleSyncSheet}
+                className="w-full py-3 rounded-xl accent-gradient text-white font-display font-semibold text-sm">
+                Synchroniser maintenant
+              </button>
+            )}
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-muted text-xs">ou importer un fichier manuellement</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-xs space-y-1">
               <p className="text-text-muted font-medium mb-2">Colonnes reconnues :</p>
@@ -614,14 +649,14 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             {importStatus.state === 'uploading' && (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card">
                 <Loader className="w-5 h-5 text-accent animate-spin flex-shrink-0" />
-                <p className="text-text text-sm">Import en cours...</p>
+                <p className="text-text text-sm">Synchronisation en cours...</p>
               </div>
             )}
             {importStatus.state === 'done' && (
               <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                  <p className="text-green-400 font-semibold">Import terminé !</p>
+                  <p className="text-green-400 font-semibold">Synchro terminée !</p>
                 </div>
                 <div className="space-y-1 text-sm">
                   <p className="text-text-muted">Lignes : <span className="text-text font-medium">{importStatus.total_in_file}</span></p>
@@ -630,7 +665,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                 {importStatus.errors.map((e, i) => <p key={i} className="text-yellow-400 text-xs">{e}</p>)}
                 <button onClick={() => setImportStatus({ state: 'idle' })}
                   className="w-full py-2.5 rounded-xl bg-green-500/20 text-green-400 text-sm font-medium">
-                  Importer un autre fichier
+                  OK
                 </button>
               </div>
             )}
