@@ -631,7 +631,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-xs space-y-1">
               <p className="text-text-muted font-medium mb-2">Colonnes reconnues :</p>
-              {[['Artiste','Artistu / Artiste'],['Titre','Titulu / Titre'],['Album','Dischettu / Album'],['Annee','Annata / Annee'],['Paroles','Parolle / Paroles']].map(([l,v])=>(
+              {[['Artiste','Artistu / Artiste'],['Titre','Titulu / Titre'],['Album','Dischettu / Album'],['Annee','Annata / Annee'],['Paroles','Paroddi / Parolle / Paroles']].map(([l,v])=>(
                 <p key={l}><span className="text-muted">{l} : </span><span className="text-accent font-mono">{v}</span></p>
               ))}
             </div>
