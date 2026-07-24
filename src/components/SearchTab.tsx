@@ -227,3 +227,40 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
                 <div className="w-10 h-10 rounded-xl bg-border flex items-center justify-center flex-shrink-0">
                   <Music2 className="w-5 h-5 text-muted" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-text font-medium text-sm truncate">{album || 'Sans album'}</p>
+                  <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
+                </div>
+                <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {!loading && view === 'songs' && (
+        <div className="space-y-2">
+          {albumSongs.map(song => (
+            <SongCard
+              key={song.id}
+              song={song}
+              trackNumber={song.numero}
+              isFavorite={favorites.includes(song.id)}
+              onSelect={() => onSelectSong(song, albumSongs)}
+              onToggleFavorite={() => onToggleFavorite(song.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {!query && !loading && view === 'artists' && (
+        <div className="text-center py-16 text-muted">
+          <svg className="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <p className="text-sm">Recherchez un artiste, un titre, un album ou des paroles</p>
+        </div>
+      )}
+    </div>
+  )
+}
