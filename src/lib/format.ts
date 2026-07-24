@@ -28,3 +28,35 @@ export function normalize(str: string | null | undefined): string {
 export function sanitizeSearch(input: string): string {
   return input.replace(/[,()%*\\_]/g, ' ').trim()
 }
+// Trouve toutes les occurrences de `query` dans `text`, en ignorant accents et
+// casse (comme la recherche elle-même), mais retourne les positions dans le
+// texte ORIGINAL (avec ses accents), pour pouvoir surligner sans altérer le
+// texte affiché. Nécessaire car la normalisation (suppression des accents)
+// peut changer la longueur de certains caractères.
+export function findHighlightRanges(text: string | null | undefined, query: string): Array<[number, number]> {
+  if (!text || !query) return []
+  const nq = normalize(query)
+  if (!nq) return []
+
+  let normalized = ''
+  const map: number[] = []
+  for (let i = 0; i < text.length; i++) {
+    const nc = normalize(text[i])
+    for (const ch of nc) {
+      normalized += ch
+      map.push(i)
+    }
+  }
+
+  const ranges: Array<[number, number]> = []
+  let from = 0
+  while (true) {
+    const idx = normalized.indexOf(nq, from)
+    if (idx === -1) break
+    const start = map[idx]
+    const end = map[idx + nq.length - 1] + 1
+    ranges.push([start, end])
+    from = idx + nq.length
+  }
+  return ranges
+}
