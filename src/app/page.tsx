@@ -27,6 +27,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [songHistory, setSongHistory] = useState<Song[]>([])
+  const [highlightQuery, setHighlightQuery] = useState('')
   const [favorites, setFavorites] = useState<number[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
@@ -44,11 +45,7 @@ export default function App() {
     const admin = sessionStorage.getItem('accolta_admin')
     if (admin === 'true') setIsAdmin(true)
   }, [])
-  
-// Empêche la page sous-jacente (onglet Artiste/Album, etc.) de rester
-  // scrollable pendant que la vue paroles est ouverte en surimpression :
-  // sinon la barre de défilement affichée reflète la hauteur de la page
-  // du dessous (potentiellement longue) et pas celle des paroles affichées.
+
   useEffect(() => {
     if (selectedSong) {
       document.body.style.overflow = 'hidden'
@@ -57,7 +54,7 @@ export default function App() {
     }
     return () => { document.body.style.overflow = '' }
   }, [selectedSong])
-  
+
   const toggleFavorite = (id: number) => {
     setFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
@@ -66,9 +63,10 @@ export default function App() {
     })
   }
 
-  const handleSelectSong = (song: Song, playlist?: Song[]) => {
+  const handleSelectSong = (song: Song, playlist?: Song[], highlightQuery?: string) => {
     setSelectedSong(song)
     if (playlist) setSongHistory(playlist)
+    setHighlightQuery(highlightQuery || '')
   }
 
   const handlePrevSong = () => {
@@ -173,12 +171,13 @@ export default function App() {
                 song={selectedSong}
                 isFavorite={favorites.includes(selectedSong.id)}
                 onToggleFavorite={() => toggleFavorite(selectedSong.id)}
-                onBack={() => setSelectedSong(null)}
+                onBack={() => { setSelectedSong(null); setHighlightQuery('') }}
                 isAdmin={isAdmin}
                 hasPrev={selectedIdx > 0}
                 hasNext={selectedIdx >= 0 && selectedIdx < songHistory.length - 1}
                 onPrev={handlePrevSong}
                 onNext={handleNextSong}
+                highlightQuery={highlightQuery}
               />
             </div>
           )}
