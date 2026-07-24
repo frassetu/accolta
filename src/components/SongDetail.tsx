@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef, Fragment } from 'react'
+import { useState, useEffect, useRef, Fragment, type ReactNode } from 'react'
 import { ChevronLeft, Heart, Music, Flag, Send, Pencil, Trash2, Loader } from 'lucide-react'
 import TopBar from './TopBar'
 import { Song, trackView } from '@/lib/supabase'
+import { findHighlightRanges } from '@/lib/format'
 
 
 interface Props {
@@ -16,18 +17,51 @@ interface Props {
   hasNext: boolean
   onPrev: () => void
   onNext: () => void
+  highlightQuery?: string
 }
 
 type ModalType = 'report' | 'propose' | 'edit' | null
 
-export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack, isAdmin, hasPrev, hasNext, onPrev, onNext }: Props) {
+// Découpe les paroles en conservant de vrais <br/> (copier/coller fiable),
+// et surligne les passages correspondant à highlightQuery si présent (n'est
+// fourni que quand la chanson vient d'un résultat "dans les paroles" de la
+// recherche — jamais pour un match titre/artiste/album).
+function renderParoles(text: string, highlightQuery?: string) {
+  const ranges = highlightQuery ? findHighlightRanges(text, highlightQuery) : []
+  const segments: { text: string; highlight: boolean }[] = []
+  let pos = 0
+  for (const [start, end] of ranges) {
+    if (start > pos) segments.push({ text: text.slice(pos, start), highlight: false })
+    segments.push({ text: text.slice(start, end), highlight: true })
+    pos = end
+  }
+  if (pos < text.length) segments.push({ text: text.slice(pos), highlight: false })
+
+  let key = 0
+  const nodes: ReactNode[] = []
+  segments.forEach(seg => {
+    const lines = seg.text.split('\n')
+    lines.forEach((line, i) => {
+      if (line) {
+        nodes.push(
+          seg.highlight
+            ? <mark key={key++} className="bg-accent/40 text-text rounded px-0.5">{line}</mark>
+            : <Fragment key={key++}>{line}</Fragment>
+        )
+      }
+      if (i < lines.length - 1) nodes.push(<br key={key++} />)
+    })
+  })
+  return nodes
+}
+
+export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack, isAdmin, hasPrev, hasNext, onPrev, onNext, highlightQuery }: Props) {
   const [fontSize, setFontSize] = useState(16)
   const [modal, setModal] = useState<ModalType>(null)
   const [modalText, setModalText] = useState('')
   const [modalSent, setModalSent] = useState(false)
   const [currentSong, setCurrentSong] = useState(song)
 
-  // Edit form state
   const [editForm, setEditForm] = useState({
     artiste: song.artiste,
     album: song.album || '',
@@ -117,12 +151,6 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
     onBack()
   }
 
-  // Glissement (swipe) : un glissement démarrant depuis le bord gauche de
-  // l'écran déclenche le retour (comme le geste natif iOS/Android). Un
-  // glissement démarrant ailleurs sur l'écran navigue entre chansons du
-  // même album : gauche → suivante, droite → précédente. On exige que le
-  // mouvement horizontal domine nettement le vertical pour ne pas interférer
-  // avec le défilement normal des paroles.
   const EDGE_ZONE = 24
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0]
@@ -149,10 +177,8 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
       onTouchEnd={handleTouchEnd}
     >
 
-      {/* Vraie TopBar globale */}
       <TopBar />
 
-      {/* Song header — flèche retour + infos chanson */}
       <div className="px-4 pt-[60px] pb-4">
         <div className="flex items-center gap-3 mb-3">
           <button onClick={onBack} className="w-9 h-9 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
@@ -172,7 +198,6 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
         </div>
       </div>
 
-      {/* Lyrics */}
       <div className="flex-1 px-4 pb-10">
         <div className="flex items-center gap-2 mb-4">
           <button onClick={() => updateFontSize(Math.max(12, fontSize - 2))}
@@ -212,12 +237,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
 
         {currentSong.paroles ? (
           <div className="text-text" style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
-            {currentSong.paroles.split('\n').map((line, i, arr) => (
-              <Fragment key={i}>
-                {line}
-                {i < arr.length - 1 && <br />}
-              </Fragment>
-            ))}
+            {renderParoles(currentSong.paroles, highlightQuery)}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center text-muted mt-20">
@@ -228,12 +248,10 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
         )}
       </div>
 
-      {/* Modals */}
       {modal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
           <div className="w-full max-w-lg bg-surface rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-auto">
 
-            {/* EDIT MODAL (admin) */}
             {modal === 'edit' && (
               <>
                 <div className="flex items-center justify-between">
@@ -279,7 +297,6 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
               </>
             )}
 
-            {/* REPORT / PROPOSE MODAL (user) */}
             {(modal === 'report' || modal === 'propose') && (
               <>
                 {modalSent ? (
