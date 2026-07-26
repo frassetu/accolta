@@ -65,6 +65,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const [exporting, setExporting] = useState(false)
   const [allSongsCache, setAllSongsCache] = useState<Song[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+
   const [loggingIn, setLoggingIn] = useState(false)
 
   useEffect(() => {
@@ -77,7 +78,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     if (res.ok) {
       const data: MissingSong[] = await res.json()
       setMissingSongs(data)
-      // Grouper par artiste
       const map = new Map<string, { count: number; albums: Set<string> }>()
       for (const s of data) {
         if (!map.has(s.artiste)) map.set(s.artiste, { count: 0, albums: new Set() })
@@ -95,7 +95,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setLoadingMissing(false)
   }
 
-  // FIX: load ALL songs (no limit), with server-side search
   const loadSongs = async (q?: string) => {
     setLoading(true)
     let query = supabase.from('chansons').select('*').order('artiste')
@@ -105,7 +104,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       query = query.or(`artiste.ilike.%${safe}%,titre.ilike.%${safe}%,album.ilike.%${safe}%`)
     }
 
-    // Paginate to get all results
     let allData: Song[] = []
     let from = 0
     const pageSize = 1000
@@ -128,7 +126,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     }
   }
 
-  // Debounced search
   const searchRef = useRef<NodeJS.Timeout>()
   const handleSearchChange = (val: string) => {
     setSearch(val)
@@ -307,30 +304,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     }
   }
 
-  const handleSyncSheet = async () => {
-    setImportStatus({ state: 'uploading' })
-    try {
-      const res = await fetch('/api/sync-sheet')
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Erreur serveur' }))
-        setImportStatus({ state: 'error', message: err.error || 'Erreur serveur' })
-        return
-      }
-      const result = await res.json()
-      setImportStatus({
-        state: 'done',
-        total_in_file: result.total_in_file,
-        inserted: result.inserted,
-        errors: result.errors || [],
-      })
-      invalidateSongs()
-      loadStats()
-      loadSongs()
-    } catch (err: any) {
-      setImportStatus({ state: 'error', message: err.message || 'Erreur inconnue' })
-    }
-  }
-  
   // Login screen
   if (!isAdmin) {
     return (
@@ -348,7 +321,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
           <h1 className="font-display font-bold text-2xl text-text mb-1">Espace administrateur</h1>
           <p className="text-text-muted text-sm mb-8">Acces reserve</p>
           <div className="w-full space-y-3">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border">
+<div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border">
               <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -429,7 +402,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         {/* PAROLES MANQUANTES */}
         {tab === 'missing' && (
           <div>
-            {/* Sous-header navigation */}
             {missingView !== 'artists' && (
               <div className="flex items-center gap-3 mb-4">
                 <button
@@ -456,7 +428,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-card pulse" />)}</div>
             ) : (
               <>
-                {/* Liste des artistes */}
                 {missingView === 'artists' && (
                   <div className="space-y-2 pb-10">
                     <p className="text-xs text-muted mb-3">{missingArtists.length} artiste{missingArtists.length > 1 ? 's' : ''} avec paroles manquantes</p>
@@ -477,7 +448,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   </div>
                 )}
 
-                {/* Albums de l'artiste avec manques */}
                 {missingView === 'albums' && missingSelectedArtist && (() => {
                   const artistSongs = missingSongs.filter(s => s.artiste === missingSelectedArtist)
                   const albumMap = new Map<string, number>()
@@ -506,7 +476,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   )
                 })()}
 
-                {/* Chansons de l'album sans paroles */}
                 {missingView === 'songs' && missingSelectedArtist && (() => {
                   const albumSongs = missingSongs
                     .filter(s => s.artiste === missingSelectedArtist && (s.album || '') === (missingSelectedAlbum || ''))
@@ -612,22 +581,11 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         )}
 
         {/* IMPORT */}
-       {tab === 'import' && (
+        {tab === 'import' && (
           <div className="space-y-4 pb-10">
             <div>
-              <h2 className="font-display font-semibold text-text mb-1">Synchroniser depuis Google Sheets</h2>
-              <p className="text-text-muted text-sm">Se synchronise automatiquement 4 fois par jour. Vous pouvez aussi forcer une synchro immédiate ci-dessous.</p>
-            </div>
-            {(importStatus.state === 'idle' || importStatus.state === 'error') && (
-              <button onClick={handleSyncSheet}
-                className="w-full py-3 rounded-xl accent-gradient text-white font-display font-semibold text-sm">
-                Synchroniser maintenant
-              </button>
-            )}
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-muted text-xs">ou importer un fichier manuellement</span>
-              <div className="flex-1 h-px bg-border" />
+              <h2 className="font-display font-semibold text-text mb-1">Importer un fichier Excel</h2>
+              <p className="text-text-muted text-sm">Toutes les lignes du fichier sont importées, sans suppression de doublons. Utile en secours — les ajouts/modifs faits dans l'appli se répercutent automatiquement sur votre Google Sheet.</p>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-xs space-y-1">
               <p className="text-text-muted font-medium mb-2">Colonnes reconnues :</p>
@@ -649,14 +607,14 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             {importStatus.state === 'uploading' && (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card">
                 <Loader className="w-5 h-5 text-accent animate-spin flex-shrink-0" />
-                <p className="text-text text-sm">Synchronisation en cours...</p>
+                <p className="text-text text-sm">Import en cours...</p>
               </div>
             )}
             {importStatus.state === 'done' && (
               <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                  <p className="text-green-400 font-semibold">Synchro terminée !</p>
+                  <p className="text-green-400 font-semibold">Import terminé !</p>
                 </div>
                 <div className="space-y-1 text-sm">
                   <p className="text-text-muted">Lignes : <span className="text-text font-medium">{importStatus.total_in_file}</span></p>
