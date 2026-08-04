@@ -138,14 +138,20 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     const res = await fetch('/api/admin?action=export')
     if (res.ok) {
       const data: Song[] = await res.json()
-      const headers = ['id', 'artiste', 'album', 'numero', 'titre', 'annee', 'paroles']
+      const fields = ['id', 'artiste', 'album', 'numero', 'titre', 'annee', 'paroles']
+      // Les en-têtes du fichier doivent correspondre à ce que l'import
+      // reconnaît (Artiste/Album/Titre/Annee/Numero/Paroles), sinon un
+      // réimport de ce même export ne reconnaît aucune ligne.
+      const headerLabels: Record<string, string> = {
+        id: 'id', artiste: 'Artiste', album: 'Album', numero: 'Numero', titre: 'Titre', annee: 'Annee', paroles: 'Paroles',
+      }
       const rows = data.map(s => {
         const row: Record<string, any> = {}
-        headers.forEach(h => { row[h] = (s as any)[h] ?? '' })
+        fields.forEach(f => { row[headerLabels[f]] = (s as any)[f] ?? '' })
         return row
       })
       const XLSX = await import('xlsx')
-      const ws = XLSX.utils.json_to_sheet(rows, { header: headers })
+      const ws = XLSX.utils.json_to_sheet(rows, { header: fields.map(f => headerLabels[f]) })
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Chansons')
       XLSX.writeFile(wb, `accolta_export_${new Date().toISOString().slice(0, 10)}.xlsx`)
