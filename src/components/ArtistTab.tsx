@@ -42,6 +42,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
       setAllSongs(allData)
       const map = new Map<string, { count: number; albums: Set<string> }>()
       for (const s of allData) {
+        if (!s.paroles || !s.paroles.trim()) continue // masque les chansons sans paroles
         if (!map.has(s.artiste)) map.set(s.artiste, { count: 0, albums: new Set() })
         const entry = map.get(s.artiste)!
         entry.count++
@@ -80,11 +81,11 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
   }, {})
 
   const artistAlbums = selectedArtist
-    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist).map(s => s.album))).sort()
+    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist && s.paroles && s.paroles.trim()).map(s => s.album))).sort()
     : []
 
   const albumSongs = allSongs
-    .filter(s => s.artiste === selectedArtist && s.album === selectedAlbum)
+    .filter(s => s.artiste === selectedArtist && s.album === selectedAlbum && s.paroles && s.paroles.trim())
     .sort((a, b) => (a.numero || 999) - (b.numero || 999))
 
   return (
@@ -134,7 +135,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
               <p className="text-center text-muted py-10">Aucun artiste trouvé</p>
             )}
             {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([letter, group]) => (
-              <div key={letter} ref={el => { letterRefs.current[letter] = el }}>
+              <div key={letter} ref={el => { letterRefs.current[letter] = el }} style={{ scrollMarginTop: '70px' }}>
                 <div className="text-accent font-display font-bold text-xs px-1 py-2">{letter}</div>
                 <div className="space-y-1.5 mb-2">
                   {group.map(artist => {
