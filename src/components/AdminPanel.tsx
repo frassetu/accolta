@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void
 }
 
-type AdminTab = 'missing' | 'add' | 'import'
+type AdminTab = 'missing' | 'browse' | 'add' | 'import'
 type MissingView = 'artists' | 'albums' | 'songs'
 
 interface MissingSong {
@@ -64,6 +64,8 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const [showAlbumSug, setShowAlbumSug] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [allSongsCache, setAllSongsCache] = useState<Song[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [loggingIn, setLoggingIn] = useState(false)
@@ -129,8 +131,35 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const searchRef = useRef<NodeJS.Timeout>()
   const handleSearchChange = (val: string) => {
     setSearch(val)
+    setSelectedIds(new Set())
     clearTimeout(searchRef.current)
     searchRef.current = setTimeout(() => loadSongs(val), 400)
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => (prev.size === songs.length ? new Set() : new Set(songs.map(s => s.id))))
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    if (!confirm(`Supprimer ${selectedIds.size} chanson${selectedIds.size > 1 ? 's' : ''} ? Cette action est irréversible.`)) return
+    setBulkDeleting(true)
+    await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/admin?id=${id}`, { method: 'DELETE' })))
+    setBulkDeleting(false)
+    setSelectedIds(new Set())
+    invalidateSongs()
+    loadSongs(search)
+    loadStats()
+    loadMissing()
   }
 
   const handleExportCSV = async () => {
@@ -415,10 +444,10 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 py-3 border-b border-border overflow-x-auto">
-        {(['missing', 'add', 'import'] as AdminTab[]).map((t) => (
-          <button key={t} onClick={() => { setTab(t); if (t !== 'add') resetForm(); if (t === 'import') setImportStatus({ state: 'idle' }); if (t === 'missing') { setMissingView('artists'); setMissingSelectedArtist(null); setMissingSelectedAlbum(null) } }}
+        {(['missing', 'browse', 'add', 'import'] as AdminTab[]).map((t) => (
+          <button key={t} onClick={() => { setTab(t); if (t !== 'add') resetForm(); if (t === 'import') setImportStatus({ state: 'idle' }); if (t === 'missing') { setMissingView('artists'); setMissingSelectedArtist(null); setMissingSelectedAlbum(null) }; if (t === 'browse') { setSearch(''); setSelectedIds(new Set()); loadSongs('') } }}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${tab === t ? 'bg-accent text-white' : 'bg-card text-text-muted'}`}>
-            {t === 'missing' ? 'Paroles manquantes' : t === 'add' ? (editSong ? 'Modifier' : 'Ajouter') : 'Importer'}
+            {t === 'missing' ? 'Paroles manquantes' : t === 'browse' ? 'Supprimer' : t === 'add' ? (editSong ? 'Modifier' : 'Ajouter') : 'Importer'}
           </button>
         ))}
       </div>
@@ -603,6 +632,74 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               {editSong ? 'Enregistrer les modifications' : 'Ajouter la chanson'}
             </button>
             {!editSong && <p className="text-center text-text-muted text-xs mt-3">Le formulaire se videra après ajout</p>}
+          </div>
+        )}
+
+        {/* SUPPRIMER */}
+        {tab === 'browse' && (
+          <div className="pb-10">
+            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border mb-4">
+              <Search className="w-4 h-4 text-muted flex-shrink-0" />
+              <input
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Artiste, album ou titre..."
+                className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted"
+              />
+            </div>
+
+            {!search.trim() && (
+              <p className="text-center text-muted py-10 text-sm px-4">Tapez pour chercher une chanson, un album ou un artiste. Cherchez un nom d'artiste ou d'album pour faire apparaître toutes ses chansons d'un coup, sélectionnez-les, puis supprimez-les en une fois.</p>
+            )}
+
+            {search.trim() && loading && (
+              <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-card pulse" />)}</div>
+            )}
+
+            {search.trim() && !loading && (
+              songs.length === 0 ? (
+                <p className="text-center text-muted py-10">Aucun résultat</p>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <button onClick={toggleSelectAll} className="flex items-center gap-2 text-sm text-accent">
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.size === songs.length && songs.length > 0 ? 'bg-accent border-accent' : 'border-border'}`}>
+                        {selectedIds.size === songs.length && songs.length > 0 && <span className="text-white text-[10px]">✓</span>}
+                      </div>
+                      Tout sélectionner ({songs.length})
+                    </button>
+                    {selectedIds.size > 0 && (
+                      <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium">
+                        {bulkDeleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        Supprimer ({selectedIds.size})
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {songs.map(song => (
+                      <div key={song.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                        <button onClick={() => toggleSelect(song.id)} className="flex-shrink-0">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.has(song.id) ? 'bg-accent border-accent' : 'border-border'}`}>
+                            {selectedIds.has(song.id) && <span className="text-white text-[10px]">✓</span>}
+                          </div>
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-text text-sm font-medium truncate">{song.titre}</p>
+                          <p className="text-muted text-xs truncate">{song.artiste}{song.album ? ` · ${song.album}` : ''}</p>
+                        </div>
+                        <button onClick={() => startEdit(song)} className="p-1.5 flex-shrink-0">
+                          <Pencil className="w-4 h-4 text-accent" />
+                        </button>
+                        <button onClick={() => handleDelete(song.id)} className="p-1.5 flex-shrink-0">
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )
+            )}
           </div>
         )}
 
