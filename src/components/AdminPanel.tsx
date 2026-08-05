@@ -186,7 +186,37 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       uniqueAlbums.filter((a) => normalizeApostrophe(a).toLowerCase().startsWith(safe)).sort().slice(0, 8)
     )
   }
+const searchAlbums = (val: string, artiste: string) => {
+    const safe = normalizeApostrophe(sanitizeSearch(val)).toLowerCase()
+    if (!safe) { setAlbumSuggestions([]); return }
+    const safeArtiste = normalizeApostrophe(sanitizeSearch(artiste)).toLowerCase()
+    const relevant = safeArtiste
+      ? allSongsCache.filter((s) => normalizeApostrophe(s.artiste).toLowerCase().includes(safeArtiste))
+      : allSongsCache
+    const uniqueAlbums = Array.from(new Set(relevant.map((s) => s.album).filter(Boolean))) as string[]
+    setAlbumSuggestions(
+      uniqueAlbums.filter((a) => normalizeApostrophe(a).toLowerCase().startsWith(safe)).sort().slice(0, 8)
+    )
+  }
 
+  // Quand on choisit un album déjà existant, on complète l'année toute
+  // seule (et l'artiste aussi, mais uniquement si ce nom d'album n'existe
+  // que chez un seul artiste — sinon impossible de savoir lequel).
+  const selectAlbumSuggestion = (album: string) => {
+    const matches = allSongsCache.filter((s) => s.album === album)
+    const distinctArtists = Array.from(new Set(matches.map((s) => s.artiste)))
+    setForm((f) => {
+      const next = { ...f, album }
+      if (distinctArtists.length === 1) {
+        next.artiste = distinctArtists[0]
+        const withYear = matches.find((s) => s.annee)
+        if (withYear?.annee) next.annee = String(withYear.annee)
+      }
+      return next
+    })
+    setShowAlbumSug(false)
+    setAlbumSuggestions([])
+  }
   const handleLogin = async () => {
     setLoggingIn(true)
     setLoginError('')
@@ -548,7 +578,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg">
                     {albumSuggestions.map((a) => (
                       <button key={a} className="w-full text-left px-4 py-2.5 text-sm text-text hover:bg-border transition-colors"
-                        onMouseDown={() => { setForm((f) => ({ ...f, album: a })); setShowAlbumSug(false); setAlbumSuggestions([]) }}>{a}</button>
+                        onMouseDown={() => selectAlbumSuggestion(a)}>{a}</button>
                     ))}
                   </div>
                 )}
