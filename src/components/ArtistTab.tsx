@@ -81,7 +81,12 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
   }, {})
 
   const artistAlbums = selectedArtist
-    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist && s.paroles && s.paroles.trim()).map(s => s.album))).sort()
+    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist && s.paroles && s.paroles.trim()).map(s => s.album)))
+        .map(album => {
+          const withYear = allSongs.find(s => s.artiste === selectedArtist && s.album === album && s.annee)
+          return { album, annee: withYear?.annee || null }
+        })
+        .sort((a, b) => (a.annee || 9999) - (b.annee || 9999) || (a.album || '').localeCompare(b.album || ''))
     : []
 
   const albumSongs = allSongs
@@ -185,10 +190,10 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
         )}
 
         {/* ALBUMS */}
-        {!loading && view === 'albums' && selectedArtist && (
+       {!loading && view === 'albums' && selectedArtist && (
           <div className="space-y-2">
-            {artistAlbums.map(album => {
-              const count = allSongs.filter(s => s.artiste === selectedArtist && s.album === album).length
+            {artistAlbums.map(({ album, annee }) => {
+              const count = allSongs.filter(s => s.artiste === selectedArtist && s.album === album && s.paroles && s.paroles.trim()).length
               return (
                 <button key={album}
                   onClick={() => { setSelectedAlbum(album); setView('songs') }}
@@ -197,7 +202,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
                     <Music2 className="w-5 h-5 text-muted" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-text font-medium text-sm truncate">{album || 'Sans album'}</p>
+                    <p className="text-text font-medium text-sm truncate">{annee ? `${annee} - ${album || 'Sans album'}` : (album || 'Sans album')}</p>
                     <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
                   </div>
                   <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
