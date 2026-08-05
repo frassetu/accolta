@@ -261,13 +261,14 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    setSaving(false)
+   setSaving(false)
     if (res.ok) {
       invalidateSongs()
       resetForm()
       setTab(editSong ? 'missing' : 'add')
       loadSongs(search)
       loadStats()
+      loadMissing()
     } else {
       const err = await res.json().catch(() => ({ error: 'Erreur inconnue' }))
       setSaveError(err.error || 'Erreur lors de la sauvegarde')
