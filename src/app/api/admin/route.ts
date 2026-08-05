@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_after as after } from 'next/server'
 import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin'
 import { importRows } from '@/lib/importChansons'
 import { checkAuth } from '@/lib/adminAuth'
@@ -69,17 +70,17 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { action, id, ...fields } = body
 
-  if (action === 'upsert') {
+ if (action === 'upsert') {
     const { data, error } = await supabase.from('chansons').upsert(fields, { onConflict: 'artiste,titre,album' }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    if (data) await pushUpsertToSheet(data as any)
+    if (data) after(() => pushUpsertToSheet(data as any))
     return NextResponse.json({ ok: true })
   }
 
   if (action === 'update') {
     const { error } = await supabase.from('chansons').update(fields).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    await pushUpsertToSheet({ id, ...fields } as any)
+    after(() => pushUpsertToSheet({ id, ...fields } as any))
     return NextResponse.json({ ok: true })
   }
 
@@ -93,6 +94,6 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'No id' }, { status: 400 })
   const { error } = await supabase.from('chansons').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  await pushDeleteToSheet(id)
+  after(() => pushDeleteToSheet(id))
   return NextResponse.json({ ok: true })
 }
