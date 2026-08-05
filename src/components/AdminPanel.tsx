@@ -186,18 +186,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       uniqueAlbums.filter((a) => normalizeApostrophe(a).toLowerCase().startsWith(safe)).sort().slice(0, 8)
     )
   }
-const searchAlbums = (val: string, artiste: string) => {
-    const safe = normalizeApostrophe(sanitizeSearch(val)).toLowerCase()
-    if (!safe) { setAlbumSuggestions([]); return }
-    const safeArtiste = normalizeApostrophe(sanitizeSearch(artiste)).toLowerCase()
-    const relevant = safeArtiste
-      ? allSongsCache.filter((s) => normalizeApostrophe(s.artiste).toLowerCase().includes(safeArtiste))
-      : allSongsCache
-    const uniqueAlbums = Array.from(new Set(relevant.map((s) => s.album).filter(Boolean))) as string[]
-    setAlbumSuggestions(
-      uniqueAlbums.filter((a) => normalizeApostrophe(a).toLowerCase().startsWith(safe)).sort().slice(0, 8)
-    )
-  }
 
   // Quand on choisit un album déjà existant, on complète l'année toute
   // seule (et l'artiste aussi, mais uniquement si ce nom d'album n'existe
@@ -217,6 +205,7 @@ const searchAlbums = (val: string, artiste: string) => {
     setShowAlbumSug(false)
     setAlbumSuggestions([])
   }
+
   const handleLogin = async () => {
     setLoggingIn(true)
     setLoginError('')
@@ -357,7 +346,7 @@ const searchAlbums = (val: string, artiste: string) => {
           <h1 className="font-display font-bold text-2xl text-text mb-1">Espace administrateur</h1>
           <p className="text-text-muted text-sm mb-8">Acces reserve</p>
           <div className="w-full space-y-3">
-<div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border">
               <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
