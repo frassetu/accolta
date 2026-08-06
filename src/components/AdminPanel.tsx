@@ -66,6 +66,10 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const [allSongsCache, setAllSongsCache] = useState<Song[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkEditOpen, setBulkEditOpen] = useState(false)
+  const [bulkAlbum, setBulkAlbum] = useState('')
+  const [bulkAnnee, setBulkAnnee] = useState('')
+  const [bulkEditing, setBulkEditing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [loggingIn, setLoggingIn] = useState(false)
@@ -149,12 +153,44 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setSelectedIds(prev => (prev.size === songs.length ? new Set() : new Set(songs.map(s => s.id))))
   }
 
-  const handleBulkDelete = async () => {
+ const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
     if (!confirm(`Supprimer ${selectedIds.size} chanson${selectedIds.size > 1 ? 's' : ''} ? Cette action est irréversible.`)) return
     setBulkDeleting(true)
     await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/admin?id=${id}`, { method: 'DELETE' })))
     setBulkDeleting(false)
+    setSelectedIds(new Set())
+    invalidateSongs()
+    loadSongs(search)
+    loadStats()
+    loadMissing()
+  }
+
+  const handleBulkEdit = async () => {
+    if (selectedIds.size === 0 || (!bulkAlbum.trim() && !bulkAnnee.trim())) return
+    setBulkEditing(true)
+    const targets = songs.filter(s => selectedIds.has(s.id))
+    // On renvoie systématiquement TOUS les champs de chaque chanson (pas
+    // seulement album/année) : sinon la synchro vers le Google Sheet
+    // effacerait les autres colonnes (titre, paroles...) de ces lignes.
+    await Promise.all(targets.map(s => fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update',
+        id: s.id,
+        artiste: s.artiste,
+        album: bulkAlbum.trim() ? bulkAlbum.trim() : (s.album || ''),
+        titre: s.titre,
+        annee: bulkAnnee.trim() ? parseInt(bulkAnnee) : (s.annee ?? null),
+        numero: (s as any).numero ?? null,
+        paroles: s.paroles ?? null,
+      }),
+    })))
+    setBulkEditing(false)
+    setBulkEditOpen(false)
+    setBulkAlbum('')
+    setBulkAnnee('')
     setSelectedIds(new Set())
     invalidateSongs()
     loadSongs(search)
@@ -669,13 +705,34 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                       Tout sélectionner ({songs.length})
                     </button>
                     {selectedIds.size > 0 && (
-                      <button onClick={handleBulkDelete} disabled={bulkDeleting}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium">
-                        {bulkDeleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        Supprimer ({selectedIds.size})
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setBulkEditOpen(o => !o)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium">
+                          <Pencil className="w-3.5 h-3.5" />
+                          Modifier ({selectedIds.size})
+                        </button>
+                        <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium">
+                          {bulkDeleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          Supprimer ({selectedIds.size})
+                        </button>
+                      </div>
                     )}
                   </div>
+                  {bulkEditOpen && selectedIds.size > 0 && (
+                    <div className="p-3 rounded-xl bg-card border border-border mb-3 space-y-2">
+                      <p className="text-text-muted text-xs">Laissez un champ vide pour ne pas y toucher. S'applique aux {selectedIds.size} chanson{selectedIds.size > 1 ? 's' : ''} sélectionnée{selectedIds.size > 1 ? 's' : ''}.</p>
+                      <input value={bulkAlbum} onChange={e => setBulkAlbum(e.target.value)} placeholder="Nouveau nom d'album"
+                        className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
+                      <input value={bulkAnnee} onChange={e => setBulkAnnee(e.target.value)} placeholder="Nouvelle année" type="number" inputMode="numeric"
+                        className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
+                      <button onClick={handleBulkEdit} disabled={bulkEditing || (!bulkAlbum.trim() && !bulkAnnee.trim())}
+                        className="w-full py-2.5 rounded-lg accent-gradient text-white text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
+                        {bulkEditing && <Loader className="w-4 h-4 animate-spin" />}
+                        Appliquer
+                      </button>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     {songs.map(song => (
                       <div key={song.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
