@@ -67,6 +67,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [bulkEditOpen, setBulkEditOpen] = useState(false)
+  const [bulkArtiste, setBulkArtiste] = useState('')
   const [bulkAlbum, setBulkAlbum] = useState('')
   const [bulkAnnee, setBulkAnnee] = useState('')
   const [bulkEditing, setBulkEditing] = useState(false)
@@ -153,7 +154,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setSelectedIds(prev => (prev.size === songs.length ? new Set() : new Set(songs.map(s => s.id))))
   }
 
- const handleBulkDelete = async () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
     if (!confirm(`Supprimer ${selectedIds.size} chanson${selectedIds.size > 1 ? 's' : ''} ? Cette action est irréversible.`)) return
     setBulkDeleting(true)
@@ -167,19 +168,16 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   }
 
   const handleBulkEdit = async () => {
-    if (selectedIds.size === 0 || (!bulkAlbum.trim() && !bulkAnnee.trim())) return
+    if (selectedIds.size === 0 || (!bulkArtiste.trim() && !bulkAlbum.trim() && !bulkAnnee.trim())) return
     setBulkEditing(true)
     const targets = songs.filter(s => selectedIds.has(s.id))
-    // On renvoie systématiquement TOUS les champs de chaque chanson (pas
-    // seulement album/année) : sinon la synchro vers le Google Sheet
-    // effacerait les autres colonnes (titre, paroles...) de ces lignes.
     await Promise.all(targets.map(s => fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'update',
         id: s.id,
-        artiste: s.artiste,
+        artiste: bulkArtiste.trim() ? bulkArtiste.trim() : s.artiste,
         album: bulkAlbum.trim() ? bulkAlbum.trim() : (s.album || ''),
         titre: s.titre,
         annee: bulkAnnee.trim() ? parseInt(bulkAnnee) : (s.annee ?? null),
@@ -189,6 +187,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     })))
     setBulkEditing(false)
     setBulkEditOpen(false)
+    setBulkArtiste('')
     setBulkAlbum('')
     setBulkAnnee('')
     setSelectedIds(new Set())
@@ -204,9 +203,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     if (res.ok) {
       const data: Song[] = await res.json()
       const fields = ['id', 'artiste', 'album', 'numero', 'titre', 'annee', 'paroles']
-      // Les en-têtes du fichier doivent correspondre à ce que l'import
-      // reconnaît (Artiste/Album/Titre/Annee/Numero/Paroles), sinon un
-      // réimport de ce même export ne reconnaît aucune ligne.
       const headerLabels: Record<string, string> = {
         id: 'id', artiste: 'Artiste', album: 'Album', numero: 'Numero', titre: 'Titre', annee: 'Annee', paroles: 'Paroles',
       }
@@ -224,10 +220,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setExporting(false)
   }
 
-  // Normalise les apostrophes (droite ' vs typographique ' / ') : Excel
-  // convertit parfois automatiquement l'une en l'autre à l'import, ce qui
-  // faisait échouer la comparaison entre ce qui est tapé et ce qui est
-  // stocké en base pour des noms comme "L'Arcusgi".
   const normalizeApostrophe = (s: string) => s.replace(/[\u2018\u2019\u02BC]/g, "'")
 
   const searchArtists = (val: string) => {
@@ -252,9 +244,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     )
   }
 
-  // Quand on choisit un album déjà existant, on complète l'année toute
-  // seule (et l'artiste aussi, mais uniquement si ce nom d'album n'existe
-  // que chez un seul artiste — sinon impossible de savoir lequel).
   const selectAlbumSuggestion = (album: string) => {
     const matches = allSongsCache.filter((s) => s.album === album)
     const distinctArtists = Array.from(new Set(matches.map((s) => s.artiste)))
@@ -326,7 +315,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-   setSaving(false)
+    setSaving(false)
     if (res.ok) {
       invalidateSongs()
       resetForm()
@@ -395,7 +384,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     }
   }
 
-  // Login screen
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-bg flex flex-col max-w-lg mx-auto">
@@ -445,7 +433,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   return (
     <div className="min-h-screen bg-bg flex flex-col max-w-lg mx-auto">
       <TopBar />
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-[68px] pb-3 border-b border-border">
         <div className="flex items-center gap-3">
           <button onClick={onClose} className="w-8 h-8 rounded-xl bg-card flex items-center justify-center">
@@ -468,29 +455,33 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         </div>
       </div>
 
-      {/* Stats */}
       <div className="flex gap-3 px-4 py-3 border-b border-border">
-        {[{ label: 'Chansons', value: stats.total }, { label: 'Avec paroles', value: stats.withLyrics }, { label: 'Artistes', value: stats.artists }].map((s) => (
+        {[
+          { label: 'Chansons', value: stats.total },
+          { label: 'Avec paroles', value: stats.withLyrics, sub: stats.total ? `${Math.round((stats.withLyrics / stats.total) * 100)}%` : undefined },
+          { label: 'Artistes', value: stats.artists },
+        ].map((s) => (
           <div key={s.label} className="flex-1 bg-card rounded-xl p-2.5 text-center">
-            <p className="font-display font-bold text-accent text-lg">{s.value}</p>
+            <p className="font-display font-bold text-accent text-lg">
+              {s.value}
+              {s.sub && <span className="text-muted text-xs font-normal ml-1">({s.sub})</span>}
+            </p>
             <p className="text-muted text-xs">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 px-4 py-3 border-b border-border overflow-x-auto">
         {(['missing', 'browse', 'add', 'import'] as AdminTab[]).map((t) => (
           <button key={t} onClick={() => { setTab(t); if (t !== 'add') resetForm(); if (t === 'import') setImportStatus({ state: 'idle' }); if (t === 'missing') { setMissingView('artists'); setMissingSelectedArtist(null); setMissingSelectedAlbum(null) }; if (t === 'browse') { setSearch(''); setSelectedIds(new Set()); loadSongs('') } }}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${tab === t ? 'bg-accent text-white' : 'bg-card text-text-muted'}`}>
-            {t === 'missing' ? 'Paroles manquantes' : t === 'browse' ? 'Supprimer' : t === 'add' ? (editSong ? 'Modifier' : 'Ajouter') : 'Importer'}
+            {t === 'missing' ? 'Paroles manquantes' : t === 'browse' ? 'Gérer' : t === 'add' ? (editSong ? 'Modifier' : 'Ajouter') : 'Importer'}
           </button>
         ))}
       </div>
 
       <div className="flex-1 overflow-auto px-4 py-4">
 
-        {/* PAROLES MANQUANTES */}
         {tab === 'missing' && (
           <div>
             {missingView !== 'artists' && (
@@ -595,7 +586,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         )}
 
 
-        {/* FORM */}
         {tab === 'add' && (
           <div className="pb-10">
             <div className="flex items-center gap-3 mb-5">
@@ -671,7 +661,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
           </div>
         )}
 
-        {/* SUPPRIMER */}
         {tab === 'browse' && (
           <div className="pb-10">
             <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border mb-4">
@@ -685,7 +674,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             </div>
 
             {!search.trim() && (
-              <p className="text-center text-muted py-10 text-sm px-4">Tapez pour chercher une chanson, un album ou un artiste. Cherchez un nom d'artiste ou d'album pour faire apparaître toutes ses chansons d'un coup, sélectionnez-les, puis supprimez-les en une fois.</p>
+              <p className="text-center text-muted py-10 text-sm px-4">Tapez pour chercher une chanson, un album ou un artiste. Cherchez un nom d'artiste ou d'album pour faire apparaître toutes ses chansons d'un coup, sélectionnez-les, puis supprimez-les ou modifiez-les en une fois.</p>
             )}
 
             {search.trim() && loading && (
@@ -722,11 +711,13 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   {bulkEditOpen && selectedIds.size > 0 && (
                     <div className="p-3 rounded-xl bg-card border border-border mb-3 space-y-2">
                       <p className="text-text-muted text-xs">Laissez un champ vide pour ne pas y toucher. S'applique aux {selectedIds.size} chanson{selectedIds.size > 1 ? 's' : ''} sélectionnée{selectedIds.size > 1 ? 's' : ''}.</p>
+                      <input value={bulkArtiste} onChange={e => setBulkArtiste(e.target.value)} placeholder="Nouveau nom d'artiste"
+                        className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
                       <input value={bulkAlbum} onChange={e => setBulkAlbum(e.target.value)} placeholder="Nouveau nom d'album"
                         className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
                       <input value={bulkAnnee} onChange={e => setBulkAnnee(e.target.value)} placeholder="Nouvelle année" type="number" inputMode="numeric"
                         className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
-                      <button onClick={handleBulkEdit} disabled={bulkEditing || (!bulkAlbum.trim() && !bulkAnnee.trim())}
+                      <button onClick={handleBulkEdit} disabled={bulkEditing || (!bulkArtiste.trim() && !bulkAlbum.trim() && !bulkAnnee.trim())}
                         className="w-full py-2.5 rounded-lg accent-gradient text-white text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
                         {bulkEditing && <Loader className="w-4 h-4 animate-spin" />}
                         Appliquer
@@ -760,7 +751,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
           </div>
         )}
 
-        {/* IMPORT */}
         {tab === 'import' && (
           <div className="space-y-4 pb-10">
             <div>
