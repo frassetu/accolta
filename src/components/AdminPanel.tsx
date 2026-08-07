@@ -386,6 +386,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     invalidateSongs()
     loadSongs(search)
     loadStats()
+    loadMissing()
   }
 
   const startEdit = (song: Song) => {
@@ -623,6 +624,9 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                           <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full flex-shrink-0">Sans paroles</span>
                           <button onClick={() => { startEdit(song as any); setTab('add') }} className="p-1.5 flex-shrink-0">
                             <Pencil className="w-4 h-4 text-accent" />
+                          </button>
+                          <button onClick={() => handleDelete(song.id)} className="p-1.5 flex-shrink-0">
+                            <Trash2 className="w-4 h-4 text-red-400" />
                           </button>
                         </div>
                       ))}
