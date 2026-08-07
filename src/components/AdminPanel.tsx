@@ -74,6 +74,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [loggingIn, setLoggingIn] = useState(false)
+  const [tracks, setTracks] = useState<{ numero: string; titre: string }[]>([{ numero: '', titre: '' }])
 
   useEffect(() => {
     if (isAdmin) { loadSongs(); loadStats(); loadMissing(); getAllSongs().then(setAllSongsCache) }
@@ -290,42 +291,90 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
   const resetForm = () => {
     setForm(emptyForm)
+    setTracks([{ numero: '', titre: '' }])
     setEditSong(null)
     setSaveError('')
     setArtistSuggestions([])
     setAlbumSuggestions([])
   }
 
+  const addTrackRow = () => {
+    setTracks(prev => {
+      const last = prev[prev.length - 1]
+      const n = last.numero.trim() && !isNaN(parseInt(last.numero)) ? String(parseInt(last.numero) + 1) : ''
+      return [...prev, { numero: n, titre: '' }]
+    })
+  }
+
+  const removeTrackRow = (i: number) => {
+    setTracks(prev => prev.filter((_, ti) => ti !== i))
+  }
+
   const handleSave = async () => {
-    if (!form.artiste.trim() || !form.titre.trim()) return
+    if (!form.artiste.trim()) return
+
+    if (editSong) {
+      if (!form.titre.trim()) return
+      setSaving(true)
+      setSaveError('')
+      const payload = {
+        artiste: form.artiste.trim(),
+        album: form.album.trim(),
+        numero: form.numero ? parseInt(form.numero) : null,
+        titre: form.titre.trim(),
+        annee: form.annee ? parseInt(form.annee) : null,
+        paroles: form.paroles.trim() || null,
+      }
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', id: editSong.id, ...payload }),
+      })
+      setSaving(false)
+      if (res.ok) {
+        invalidateSongs()
+        resetForm()
+        setTab('missing')
+        loadSongs(search)
+        loadStats()
+        loadMissing()
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Erreur inconnue' }))
+        setSaveError(err.error || 'Erreur lors de la sauvegarde')
+      }
+      return
+    }
+
+    // Ajout (éventuellement en lot) : chaque ligne numéro/titre devient une
+    // chanson à part, partageant le même artiste/album/année.
+    if (tracks.some(t => !t.titre.trim())) return
     setSaving(true)
     setSaveError('')
-    const payload = {
-      artiste: form.artiste.trim(),
-      album: form.album.trim(),
-      numero: form.numero ? parseInt(form.numero) : null,
-      titre: form.titre.trim(),
-      annee: form.annee ? parseInt(form.annee) : null,
-      paroles: form.paroles.trim() || null,
-    }
-    const action = editSong ? 'update' : 'upsert'
-    const body = editSong ? { action, id: editSong.id, ...payload } : { action, ...payload }
-    const res = await fetch('/api/admin', {
+    const results = await Promise.all(tracks.map(t => fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+      body: JSON.stringify({
+        action: 'upsert',
+        artiste: form.artiste.trim(),
+        album: form.album.trim(),
+        numero: t.numero ? parseInt(t.numero) : null,
+        titre: t.titre.trim(),
+        annee: form.annee ? parseInt(form.annee) : null,
+        // Les paroles ne s'appliquent qu'en ajout d'une seule chanson —
+        // aucun sens de dupliquer le même texte sur plusieurs titres.
+        paroles: tracks.length === 1 ? (form.paroles.trim() || null) : null,
+      }),
+    })))
     setSaving(false)
-    if (res.ok) {
+    if (results.every(r => r.ok)) {
       invalidateSongs()
       resetForm()
-      setTab(editSong ? 'missing' : 'add')
+      setTab('add')
       loadSongs(search)
       loadStats()
       loadMissing()
     } else {
-      const err = await res.json().catch(() => ({ error: 'Erreur inconnue' }))
-      setSaveError(err.error || 'Erreur lors de la sauvegarde')
+      setSaveError("Certaines chansons n'ont pas pu être ajoutées.")
     }
   }
 
@@ -612,50 +661,98 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   </div>
                 )}
               </div>
-              <div className="relative">
-                <label className="text-text-muted text-xs mb-1.5 block">Album</label>
-                <input type="text" value={form.album}
-                  onChange={(e) => { setForm((f) => ({ ...f, album: e.target.value })); searchAlbums(e.target.value, form.artiste); setShowAlbumSug(true) }}
-                  onBlur={() => setTimeout(() => setShowAlbumSug(false), 150)}
-                  placeholder="Nom de l'album"
-                  className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
-                {showAlbumSug && albumSuggestions.length > 0 && (
-                  <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg">
-                    {albumSuggestions.map((a) => (
-                      <button key={a} className="w-full text-left px-4 py-2.5 text-sm text-text hover:bg-border transition-colors"
-                        onMouseDown={() => selectAlbumSuggestion(a)}>{a}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {[
-                { key: 'numero', label: 'N° de piste', placeholder: '1', type: 'number' },
-                { key: 'titre', label: 'Titre *', placeholder: 'Titre de la chanson', type: 'text' },
-                { key: 'annee', label: 'Annee', placeholder: '2024', type: 'number' },
-              ].map(({ key, label, placeholder, type }) => (
-                <div key={key}>
-                  <label className="text-text-muted text-xs mb-1.5 block">{label}</label>
-                  <input type={type} inputMode={type === 'number' ? 'numeric' : undefined} value={(form as any)[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
-                    className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
+
+              <div className="flex gap-3">
+                <div className="w-24 flex-shrink-0">
+                  <label className="text-text-muted text-xs mb-1.5 block">Annee</label>
+                  <input type="number" inputMode="numeric" value={form.annee}
+                    onChange={(e) => setForm((f) => ({ ...f, annee: e.target.value }))} placeholder="2024"
+                    className="w-full px-3 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                 </div>
-              ))}
-              <div>
-                <label className="text-text-muted text-xs mb-1.5 block">Paroles</label>
-                <textarea value={form.paroles} onChange={(e) => setForm((f) => ({ ...f, paroles: e.target.value }))}
-                  placeholder="Coller les paroles ici..." rows={10}
-                  className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors resize-none" />
+                <div className="flex-1 relative">
+                  <label className="text-text-muted text-xs mb-1.5 block">Album</label>
+                  <input type="text" value={form.album}
+                    onChange={(e) => { setForm((f) => ({ ...f, album: e.target.value })); searchAlbums(e.target.value, form.artiste); setShowAlbumSug(true) }}
+                    onBlur={() => setTimeout(() => setShowAlbumSug(false), 150)}
+                    placeholder="Nom de l'album"
+                    className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
+                  {showAlbumSug && albumSuggestions.length > 0 && (
+                    <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg">
+                      {albumSuggestions.map((a) => (
+                        <button key={a} className="w-full text-left px-4 py-2.5 text-sm text-text hover:bg-border transition-colors"
+                          onMouseDown={() => selectAlbumSuggestion(a)}>{a}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {editSong ? (
+                <div className="flex gap-3">
+                  <div className="w-20 flex-shrink-0">
+                    <label className="text-text-muted text-xs mb-1.5 block">N°</label>
+                    <input type="number" inputMode="numeric" value={form.numero}
+                      onChange={(e) => setForm((f) => ({ ...f, numero: e.target.value }))} placeholder="1"
+                      className="w-full px-3 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-text-muted text-xs mb-1.5 block">Titre *</label>
+                    <input type="text" value={form.titre}
+                      onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} placeholder="Titre de la chanson"
+                      className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {tracks.map((t, i) => (
+                    <div key={i} className="flex gap-3 items-end">
+                      <div className="w-20 flex-shrink-0">
+                        {i === 0 && <label className="text-text-muted text-xs mb-1.5 block">N°</label>}
+                        <input type="number" inputMode="numeric" value={t.numero}
+                          onChange={(e) => setTracks(ts => ts.map((tt, ti) => ti === i ? { ...tt, numero: e.target.value } : tt))}
+                          placeholder="1"
+                          className="w-full px-3 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
+                      </div>
+                      <div className="flex-1">
+                        {i === 0 && <label className="text-text-muted text-xs mb-1.5 block">Titre *</label>}
+                        <input type="text" value={t.titre}
+                          onChange={(e) => setTracks(ts => ts.map((tt, ti) => ti === i ? { ...tt, titre: e.target.value } : tt))}
+                          placeholder="Titre de la chanson"
+                          className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
+                      </div>
+                      {tracks.length > 1 && (
+                        <button onClick={() => removeTrackRow(i)} className="p-2.5 flex-shrink-0">
+                          <X className="w-4 h-4 text-muted" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={addTrackRow}
+                    className="w-full py-2.5 rounded-xl border border-dashed border-border text-accent text-sm font-medium flex items-center justify-center gap-1.5">
+                    <Plus className="w-4 h-4" />
+                    Ajouter une autre chanson
+                  </button>
+                </>
+              )}
+
+              {(editSong || tracks.length === 1) && (
+                <div>
+                  <label className="text-text-muted text-xs mb-1.5 block">Paroles</label>
+                  <textarea value={form.paroles} onChange={(e) => setForm((f) => ({ ...f, paroles: e.target.value }))}
+                    placeholder="Coller les paroles ici..." rows={10}
+                    className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors resize-none" />
+                </div>
+              )}
             </div>
             {saveError && (
               <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
                 <p className="text-red-400 text-sm">{saveError}</p>
               </div>
             )}
-            <button onClick={handleSave} disabled={!form.artiste.trim() || !form.titre.trim() || saving}
+            <button onClick={handleSave} disabled={!form.artiste.trim() || (editSong ? !form.titre.trim() : tracks.some(t => !t.titre.trim())) || saving}
               className="mt-4 w-full py-3.5 rounded-xl accent-gradient text-white font-display font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
               {saving && <Loader className="w-4 h-4 animate-spin" />}
-              {editSong ? 'Enregistrer les modifications' : 'Ajouter la chanson'}
+              {editSong ? 'Enregistrer les modifications' : tracks.length > 1 ? `Ajouter ${tracks.length} chansons` : 'Ajouter la chanson'}
             </button>
             {!editSong && <p className="text-center text-text-muted text-xs mt-3">Le formulaire se videra après ajout</p>}
           </div>
