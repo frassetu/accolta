@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     let all: any[] = []
     let from = 0
     while (true) {
-      const { data } = await supabase.from('chansons').select('*').range(from, from + 999)
+      const { data } = await supabase.from('chansons').select('*').order('id', { ascending: true }).range(from, from + 999)
       if (!data || data.length === 0) break
       all = [...all, ...data]
       if (data.length < 1000) break
@@ -44,7 +44,11 @@ export async function GET(req: NextRequest) {
 
     const offset = parseInt(searchParams.get('offset') || '0')
     const limit = 400
-    const { data, count } = await supabase.from('chansons').select('*', { count: 'exact' }).range(offset, offset + limit - 1)
+    // Tri explicite obligatoire : sans lui, l'ordre des lignes entre deux
+    // appels séparés (un par paquet) n'est pas garanti stable côté
+    // PostgREST, et une chanson peut se retrouver entre deux paquets et
+    // n'être envoyée dans aucun des deux.
+    const { data, count } = await supabase.from('chansons').select('*', { count: 'exact' }).order('id', { ascending: true }).range(offset, offset + limit - 1)
     if (!data) return NextResponse.json({ error: 'Lecture Supabase impossible' }, { status: 500 })
 
     const res = await fetch(url, {
