@@ -75,6 +75,9 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
   const [loggingIn, setLoggingIn] = useState(false)
   const [tracks, setTracks] = useState<{ numero: string; titre: string }[]>([{ numero: '', titre: '' }])
+  const [forceSyncing, setForceSyncing] = useState(false)
+  const [forceSyncProgress, setForceSyncProgress] = useState<{ done: number; total: number } | null>(null)
+  const [forceSyncError, setForceSyncError] = useState('')
 
   useEffect(() => {
     if (isAdmin) { loadSongs(); loadStats(); loadMissing(); getAllSongs().then(setAllSongsCache) }
@@ -432,6 +435,31 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     } catch (err: any) {
       setImportStatus({ state: 'error', message: err.message || 'Erreur inconnue' })
     }
+  }
+
+  const handleForceSync = async () => {
+    if (!confirm("Forcer une synchro complète vers Google Sheets ? Ça peut prendre une minute ou deux, ne quittez pas cette page pendant l'opération.")) return
+    setForceSyncing(true)
+    setForceSyncError('')
+    setForceSyncProgress({ done: 0, total: 0 })
+    let offset = 0
+    let hasMore = true
+    try {
+      while (hasMore) {
+        const res = await fetch(`/api/admin?action=force-sync-sheet&offset=${offset}`)
+        const result = await res.json()
+        if (!res.ok || result.error) {
+          setForceSyncError(result.error || 'Erreur inconnue')
+          break
+        }
+        offset = result.nextOffset
+        hasMore = result.hasMore
+        setForceSyncProgress({ done: offset, total: result.total })
+      }
+    } catch (e: any) {
+      setForceSyncError(e.message || 'Erreur réseau')
+    }
+    setForceSyncing(false)
   }
 
   if (!isAdmin) {
@@ -854,6 +882,21 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
         {tab === 'import' && (
           <div className="space-y-4 pb-10">
+            <div className="p-3 rounded-xl bg-card border border-border space-y-2">
+              <p className="text-text-muted text-xs">Si le Google Sheet n'est plus à jour (ex : après une erreur de configuration passée), forcez une resynchro complète de toutes les chansons vers le Sheet.</p>
+              <button onClick={handleForceSync} disabled={forceSyncing}
+                className="w-full py-2.5 rounded-xl bg-accent/10 text-accent text-sm font-medium flex items-center justify-center gap-2">
+                {forceSyncing && <Loader className="w-4 h-4 animate-spin" />}
+                Forcer la synchro complète
+              </button>
+              {forceSyncProgress && forceSyncing && (
+                <p className="text-text-muted text-xs text-center">{forceSyncProgress.done} / {forceSyncProgress.total} chansons envoyées...</p>
+              )}
+              {forceSyncError && <p className="text-red-400 text-xs">{forceSyncError}</p>}
+              {!forceSyncing && forceSyncProgress && !forceSyncError && (
+                <p className="text-green-400 text-xs text-center">✅ Synchro terminée ({forceSyncProgress.done} chansons)</p>
+              )}
+            </div>
             <div>
               <h2 className="font-display font-semibold text-text mb-1">Importer un fichier Excel</h2>
               <p className="text-text-muted text-sm">Toutes les lignes du fichier sont importées, sans suppression de doublons. Utile en secours — les ajouts/modifs faits dans l'appli se répercutent automatiquement sur votre Google Sheet.</p>
