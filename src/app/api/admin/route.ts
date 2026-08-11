@@ -71,8 +71,18 @@ export async function GET(req: NextRequest) {
     const secret = process.env.SHEET_PUSH_SECRET
     if (!url || !secret) return NextResponse.json({ error: 'SHEET_PUSH_URL/SHEET_PUSH_SECRET non configurées' }, { status: 500 })
 
-    const { data } = await supabase.from('chansons').select('id')
-    const validIds = (data || []).map((r: any) => r.id)
+    // Pagination obligatoire : Supabase plafonne à 1000 lignes par requête
+    // par défaut. Sans ça, seuls les 1000 premiers id étaient considérés
+    // "valides" et tout le reste finissait supprimé du Sheet par erreur.
+    let validIds: number[] = []
+    let from = 0
+    while (true) {
+      const { data } = await supabase.from('chansons').select('id').order('id', { ascending: true }).range(from, from + 999)
+      if (!data || data.length === 0) break
+      validIds = [...validIds, ...data.map((r: any) => r.id)]
+      if (data.length < 1000) break
+      from += 1000
+    }
 
     const res = await fetch(url, {
       method: 'POST',
