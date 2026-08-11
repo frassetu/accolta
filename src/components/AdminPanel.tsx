@@ -162,13 +162,15 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     if (selectedIds.size === 0) return
     if (!confirm(`Supprimer ${selectedIds.size} chanson${selectedIds.size > 1 ? 's' : ''} ? Cette action est irréversible.`)) return
     setBulkDeleting(true)
-    await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/admin?id=${id}`, { method: 'DELETE' })))
+    const results = await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/admin?id=${id}`, { method: 'DELETE' })))
     setBulkDeleting(false)
+    const failed = results.filter(r => !r.ok).length
     setSelectedIds(new Set())
     invalidateSongs()
     loadSongs(search)
     loadStats()
     loadMissing()
+    if (failed > 0) alert(`${failed} suppression(s) ont échoué. Réessayez.`)
   }
 
   const handleBulkEdit = async () => {
@@ -383,13 +385,14 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
   const handleDelete = async (id: number) => {
     if (!confirm('Supprimer cette chanson ?')) return
-    await fetch(`/api/admin?id=${id}`, {
+    const res = await fetch(`/api/admin?id=${id}`, {
       method: 'DELETE',
     })
     invalidateSongs()
     loadSongs(search)
     loadStats()
     loadMissing()
+    if (!res.ok) alert('La suppression a échoué. Réessayez.')
   }
 
   const startEdit = (song: Song) => {
@@ -444,17 +447,28 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     setForceSyncProgress({ done: 0, total: 0 })
     let offset = 0
     let hasMore = true
+    let failed = false
     try {
       while (hasMore) {
         const res = await fetch(`/api/admin?action=force-sync-sheet&offset=${offset}`)
         const result = await res.json()
         if (!res.ok || result.error) {
           setForceSyncError(result.error || 'Erreur inconnue')
+          failed = true
           break
         }
         offset = result.nextOffset
         hasMore = result.hasMore
         setForceSyncProgress({ done: offset, total: result.total })
+      }
+      // Une fois toutes les chansons envoyées, on nettoie les lignes du
+      // Sheet qui correspondent à des chansons supprimées dans l'appli.
+      if (!failed) {
+        const pruneRes = await fetch('/api/admin?action=prune-orphans-sheet')
+        const pruneResult = await pruneRes.json()
+        if (!pruneRes.ok || pruneResult.error) {
+          setForceSyncError(pruneResult.error || 'Erreur lors du nettoyage des lignes supprimées')
+        }
       }
     } catch (e: any) {
       setForceSyncError(e.message || 'Erreur réseau')
