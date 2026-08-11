@@ -66,6 +66,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, processed: data.length, total: count, nextOffset, hasMore })
   }
 
+  if (action === 'prune-orphans-sheet') {
+    const url = process.env.SHEET_PUSH_URL
+    const secret = process.env.SHEET_PUSH_SECRET
+    if (!url || !secret) return NextResponse.json({ error: 'SHEET_PUSH_URL/SHEET_PUSH_SECRET non configurées' }, { status: 500 })
+
+    const { data } = await supabase.from('chansons').select('id')
+    const validIds = (data || []).map((r: any) => r.id)
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'pruneOrphans', secret, validIds }),
+    })
+    const result = await res.json().catch(() => ({}))
+    if (!res.ok || result.error) {
+      return NextResponse.json({ error: result.error || `Erreur du script (${res.status})` }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   const id = searchParams.get('id')
   if (id) {
     const { data } = await supabase.from('chansons').select('*').eq('id', id).single()
