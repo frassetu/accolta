@@ -136,13 +136,13 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
       setCurrentSong({ ...currentSong, ...editForm, annee: editForm.annee ? parseInt(editForm.annee) : null, paroles: editForm.paroles || null })
       setModal(null)
     } else {
-      const err = await res.json().catch(() => ({ error: 'Erreur' }))
-      setSaveError(err.error || 'Erreur lors de la sauvegarde')
+      const err = await res.json().catch(() => ({ error: 'Sbagliu' }))
+      setSaveError(err.error || "Sbagliu mentri l'arrigistramentu")
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm(`Supprimer "${song.titre}" ?`)) return
+    if (!confirm(`Sguassà "${song.titre}" ?`)) return
     setDeleting(true)
     await fetch(`/api/admin?id=${song.id}`, {
       method: 'DELETE',
@@ -202,7 +202,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
         <div className="flex items-center gap-2 mb-4">
           <button onClick={() => updateFontSize(Math.max(12, fontSize - 2))}
             className="w-8 h-8 rounded-lg bg-card flex items-center justify-center text-text font-bold">−</button>
-          <span className="text-sm text-muted">Taille</span>
+          <span className="text-sm text-muted">Grandezza</span>
           <button onClick={() => updateFontSize(Math.min(32, fontSize + 2))}
             className="w-8 h-8 rounded-lg bg-card flex items-center justify-center text-text font-bold">+</button>
           <div className="flex-1" />
@@ -211,12 +211,12 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
               <button onClick={() => { setModal('edit'); setSaveError('') }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium">
                 <Pencil className="w-3.5 h-3.5" />
-                Modifier
+                Scambià
               </button>
               <button onClick={handleDelete} disabled={deleting}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium">
                 {deleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                Supprimer
+                Sguassà
               </button>
             </>
           ) : (
@@ -224,12 +224,12 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
               <button onClick={() => { setModal('propose'); setModalText('') }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card text-text-muted text-xs font-medium">
                 <Send className="w-3.5 h-3.5" />
-                Proposer
+                Prupona
               </button>
               <button onClick={() => { setModal('report'); setModalText('') }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card text-text-muted text-xs font-medium">
                 <Flag className="w-3.5 h-3.5" />
-                Signaler
+                Signalà
               </button>
             </>
           )}
@@ -242,8 +242,8 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
         ) : (
           <div className="flex flex-col items-center justify-center text-center text-muted mt-20">
             <Music className="w-10 h-10 mb-3" />
-            <p className="font-medium">Paroles non disponibles</p>
-            <p className="text-sm opacity-70">Cette chanson n'a pas encore de paroles</p>
+            <p className="font-medium">Paroddi micca dispunibili</p>
+            <p className="text-sm opacity-70">Sta canzona ùn hà ancu paroddi</p>
           </div>
         )}
       </div>
@@ -255,16 +255,16 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
             {modal === 'edit' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h3 className="font-display font-bold text-text">Modifier la chanson</h3>
-                  <button onClick={() => setModal(null)} className="text-muted text-sm">Annuler</button>
+                  <h3 className="font-display font-bold text-text">Scambià a canzona</h3>
+                  <button onClick={() => setModal(null)} className="text-muted text-sm">Annullà</button>
                 </div>
                 <div className="space-y-3">
                   {[
-                    { key: 'artiste', label: 'Artiste *', placeholder: 'Artiste' },
-                    { key: 'titre', label: 'Titre *', placeholder: 'Titre' },
-                    { key: 'album', label: 'Album', placeholder: 'Album' },
-                    { key: 'annee', label: 'Année', placeholder: '2024' },
-                    { key: 'numero', label: 'N° piste', placeholder: '1' },
+                    { key: 'artiste', label: 'Artistu *', placeholder: 'Artistu' },
+                    { key: 'titre', label: 'Titulu *', placeholder: 'Titulu' },
+                    { key: 'album', label: 'Dischettu', placeholder: 'Dischettu' },
+                    { key: 'annee', label: 'Annata', placeholder: '2024' },
+                    { key: 'numero', label: 'Numeru di canzona', placeholder: '1' },
                   ].map(({ key, label, placeholder }) => (
                     <div key={key}>
                       <label className="text-text-muted text-xs mb-1 block">{label}</label>
@@ -277,7 +277,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
                     </div>
                   ))}
                   <div>
-                    <label className="text-text-muted text-xs mb-1 block">Paroles</label>
+                    <label className="text-text-muted text-xs mb-1 block">Paroddi</label>
                     <textarea
                       value={editForm.paroles}
                       onChange={e => setEditForm(f => ({ ...f, paroles: e.target.value }))}
@@ -292,7 +292,7 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
                   onClick={handleSaveEdit}
                   className="w-full py-3 rounded-xl accent-gradient text-white font-display font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2">
                   {saving && <Loader className="w-4 h-4 animate-spin" />}
-                  Enregistrer
+                  Arrigistrà
                 </button>
               </>
             )}
@@ -302,26 +302,26 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
                 {modalSent ? (
                   <div className="text-center py-4">
                     <p className="text-2xl mb-2">✅</p>
-                    <p className="font-display font-semibold text-text">Envoyé, merci !</p>
+                    <p className="font-display font-semibold text-text">Mandatu, grazia !</p>
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center justify-between">
                       <h3 className="font-display font-bold text-text">
-                        {modal === 'report' ? 'Signaler une erreur' : 'Proposer des paroles'}
+                        {modal === 'report' ? 'Signalà un sbagliu' : 'Prupona paroddi'}
                       </h3>
-                      <button onClick={() => setModal(null)} className="text-muted text-sm">Annuler</button>
+                      <button onClick={() => setModal(null)} className="text-muted text-sm">Annullà</button>
                     </div>
                     <textarea
                       value={modalText}
                       onChange={e => setModalText(e.target.value)}
-                      placeholder={modal === 'report' ? 'Décris l\'erreur…' : 'Colle les paroles ici…'}
+                      placeholder={modal === 'report' ? 'Discriviti u sbagliu…' : 'Mittiti i paroddi quì…'}
                       rows={6}
                       className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted resize-none focus:border-accent"
                     />
                     <button disabled={!modalText.trim()} onClick={handleSendModal}
                       className="w-full py-3 rounded-xl accent-gradient text-white font-display font-semibold text-sm disabled:opacity-40">
-                      Envoyer
+                      Mandà
                     </button>
                   </>
                 )}

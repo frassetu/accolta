@@ -160,7 +160,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`Supprimer ${selectedIds.size} chanson${selectedIds.size > 1 ? 's' : ''} ? Cette action est irréversible.`)) return
+    if (!confirm(`Sguassà ${selectedIds.size} canzona${selectedIds.size > 1 ? '/canzoni' : ''} ? St'azzioni ùn si pò micca canciddà.`)) return
     setBulkDeleting(true)
     const results = await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/admin?id=${id}`, { method: 'DELETE' })))
     setBulkDeleting(false)
@@ -170,7 +170,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     loadSongs(search)
     loadStats()
     loadMissing()
-    if (failed > 0) alert(`${failed} suppression(s) ont échoué. Réessayez.`)
+    if (failed > 0) alert(`${failed} suppressioni ani fiascatu. Pruveti torna.`)
   }
 
   const handleBulkEdit = async () => {
@@ -220,7 +220,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       const XLSX = await import('xlsx')
       const ws = XLSX.utils.json_to_sheet(rows, { header: fields.map(f => headerLabels[f]) })
       const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Chansons')
+      XLSX.utils.book_append_sheet(wb, ws, 'Canzoni')
       XLSX.writeFile(wb, `accolta_export_${new Date().toISOString().slice(0, 10)}.xlsx`)
     }
     setExporting(false)
@@ -278,11 +278,11 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       if (res.ok) {
         onLogin()
       } else {
-        const err = await res.json().catch(() => ({ error: 'Email ou mot de passe incorrect' }))
-        setLoginError(err.error || 'Email ou mot de passe incorrect')
+        const err = await res.json().catch(() => ({ error: 'Mail o parodda sicreta falza' }))
+        setLoginError(err.error || 'Mail o parodda sicreta falza')
       }
     } catch {
-      setLoginError('Erreur de connexion au serveur')
+      setLoginError('Arrori di cunnissioni à u sirvitori')
     } finally {
       setLoggingIn(false)
     }
@@ -344,8 +344,8 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         loadStats()
         loadMissing()
       } else {
-        const err = await res.json().catch(() => ({ error: 'Erreur inconnue' }))
-        setSaveError(err.error || 'Erreur lors de la sauvegarde')
+        const err = await res.json().catch(() => ({ error: 'Arrori scunnisciutu' }))
+        setSaveError(err.error || 'Sbagliu mentri l\'arrigistramentu')
       }
       return
     }
@@ -379,12 +379,12 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       loadStats()
       loadMissing()
     } else {
-      setSaveError("Certaines chansons n'ont pas pu être ajoutées.")
+      setSaveError("Certi canzoni ùn ani pussutu essa aghjunta.")
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Supprimer cette chanson ?')) return
+    if (!confirm('Sguassà sta canzona ?')) return
     const res = await fetch(`/api/admin?id=${id}`, {
       method: 'DELETE',
     })
@@ -392,7 +392,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
     loadSongs(search)
     loadStats()
     loadMissing()
-    if (!res.ok) alert('La suppression a échoué. Réessayez.')
+    if (!res.ok) alert('A suppressioni hà fiascatu. Pruveti torna.')
   }
 
   const startEdit = (song: Song) => {
@@ -421,8 +421,8 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         body: formData,
       })
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Erreur serveur' }))
-        setImportStatus({ state: 'error', message: err.error || 'Erreur serveur' })
+        const err = await res.json().catch(() => ({ error: 'Arrori di sirvitori' }))
+        setImportStatus({ state: 'error', message: err.error || 'Arrori di sirvitori' })
         return
       }
       const result = await res.json()
@@ -436,7 +436,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
       loadStats()
       loadSongs()
     } catch (err: any) {
-      setImportStatus({ state: 'error', message: err.message || 'Erreur inconnue' })
+      setImportStatus({ state: 'error', message: err.message || 'Arrori scunnisciutu' })
     }
   }
 
@@ -453,7 +453,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         const res = await fetch(`/api/admin?action=force-sync-sheet&offset=${offset}`)
         const result = await res.json()
         if (!res.ok || result.error) {
-          setForceSyncError(result.error || 'Erreur inconnue')
+          setForceSyncError(result.error || 'Arrori scunnisciutu')
           failed = true
           break
         }
@@ -467,11 +467,11 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         const pruneRes = await fetch('/api/admin?action=prune-orphans-sheet')
         const pruneResult = await pruneRes.json()
         if (!pruneRes.ok || pruneResult.error) {
-          setForceSyncError(pruneResult.error || 'Erreur lors du nettoyage des lignes supprimées')
+          setForceSyncError(pruneResult.error || 'Sbagliu mentri u nettamentu di i linii sguassati')
         }
       }
     } catch (e: any) {
-      setForceSyncError(e.message || 'Erreur réseau')
+      setForceSyncError(e.message || 'Sbagliu di rete')
     }
     setForceSyncing(false)
   }
@@ -489,21 +489,21 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 className="font-display font-bold text-2xl text-text mb-1">Espace administrateur</h1>
-          <p className="text-text-muted text-sm mb-8">Acces reserve</p>
+          <h1 className="font-display font-bold text-2xl text-text mb-1">Spaziu amministratori</h1>
+          <p className="text-text-muted text-sm mb-8">Accessu risirvatu</p>
           <div className="w-full space-y-3">
             <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border">
               <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <input type="email" placeholder="Mail" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted" />
             </div>
             <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-border">
               <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              <input type={showPwd ? 'text' : 'password'} placeholder="Mot de passe" value={password}
+              <input type={showPwd ? 'text' : 'password'} placeholder="Parodda sicreta" value={password}
                 onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                 className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted" />
               <button onClick={() => setShowPwd(!showPwd)}>
@@ -514,7 +514,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             <button onClick={handleLogin} disabled={loggingIn || !email.trim() || !password}
               className="w-full py-3.5 rounded-2xl accent-gradient text-white font-display font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
               {loggingIn && <Loader className="w-4 h-4 animate-spin" />}
-              Se connecter
+              Cunnettà si
             </button>
           </div>
         </div>
@@ -530,7 +530,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
           <button onClick={onClose} className="w-8 h-8 rounded-xl bg-card flex items-center justify-center">
             <X className="w-4 h-4 text-text" />
           </button>
-          <h1 className="font-display font-bold text-lg text-text">Admin</h1>
+          <h1 className="font-display font-bold text-lg text-text">Amministrazioni</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -539,7 +539,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium"
           >
             {exporting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            Export Excel
+            Spurtà Excel
           </button>
           <button onClick={handleLogout} className="flex items-center gap-1.5 text-muted text-sm">
             <LogOut className="w-4 h-4" />
@@ -549,9 +549,9 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
       <div className="flex gap-3 px-4 py-3 border-b border-border">
         {[
-          { label: 'Chansons', value: stats.total },
-          { label: 'Avec paroles', value: stats.withLyrics, sub: stats.total ? `${Math.round((stats.withLyrics / stats.total) * 100)}%` : undefined },
-          { label: 'Artistes', value: stats.artists },
+          { label: 'Canzoni', value: stats.total },
+          { label: 'Cù paroddi', value: stats.withLyrics, sub: stats.total ? `${Math.round((stats.withLyrics / stats.total) * 100)}%` : undefined },
+          { label: 'Artisti', value: stats.artists },
         ].map((s) => (
           <div key={s.label} className="flex-1 bg-card rounded-xl p-2.5 text-center">
             <p className="font-display font-bold text-accent text-lg">
@@ -567,7 +567,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         {(['missing', 'browse', 'add', 'import'] as AdminTab[]).map((t) => (
           <button key={t} onClick={() => { setTab(t); if (t !== 'add') resetForm(); if (t === 'import') setImportStatus({ state: 'idle' }); if (t === 'missing') { setMissingView('artists'); setMissingSelectedArtist(null); setMissingSelectedAlbum(null) }; if (t === 'browse') { setSearch(''); setSelectedIds(new Set()); loadSongs('') } }}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${tab === t ? 'bg-accent text-white' : 'bg-card text-text-muted'}`}>
-            {t === 'missing' ? 'Paroles manquantes' : t === 'browse' ? 'Gérer' : t === 'add' ? (editSong ? 'Modifier' : 'Ajouter') : 'Importer'}
+            {t === 'missing' ? 'Paroddi mancanti' : t === 'browse' ? 'Amministrà' : t === 'add' ? (editSong ? 'Scambià' : 'Aghjunghja') : 'Impurtà'}
           </button>
         ))}
       </div>
@@ -591,7 +591,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   {missingView === 'songs' && (
                     <>
                       <p className="text-muted text-xs">{missingSelectedArtist}</p>
-                      <h2 className="font-display font-bold text-text truncate">{missingSelectedAlbum || 'Sans album'}</h2>
+                      <h2 className="font-display font-bold text-text truncate">{missingSelectedAlbum || 'Senza dischettu'}</h2>
                     </>
                   )}
                 </div>
@@ -604,9 +604,9 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               <>
                 {missingView === 'artists' && (
                   <div className="space-y-2 pb-10">
-                    <p className="text-xs text-muted mb-3">{missingArtists.length} artiste{missingArtists.length > 1 ? 's' : ''} avec paroles manquantes</p>
+                    <p className="text-xs text-muted mb-3">{missingArtists.length} artistu{missingArtists.length > 1 ? '/artisti' : ''} cù paroddi mancanti</p>
                     {missingArtists.length === 0 && (
-                      <p className="text-center text-muted py-8">Toutes les paroles sont complètes 🎉</p>
+                      <p className="text-center text-muted py-8">Tutti i paroddi sò cumpleti 🎉</p>
                     )}
                     {missingArtists.map(artist => (
                       <button key={artist.name}
@@ -614,7 +614,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors text-left">
                         <div className="flex-1 min-w-0">
                           <p className="text-text text-sm font-medium truncate">{artist.name}</p>
-                          <p className="text-muted text-xs">{artist.count} chanson{artist.count > 1 ? 's' : ''} sans paroles</p>
+                          <p className="text-muted text-xs">{artist.count} canzona{artist.count > 1 ? '/canzoni' : ''} senza paroddi</p>
                         </div>
                         <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                       </button>
@@ -640,8 +640,8 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                             <Music2 className="w-5 h-5 text-muted" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-text font-medium text-sm truncate">{album || 'Sans album'}</p>
-                            <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''} sans paroles</p>
+                            <p className="text-text font-medium text-sm truncate">{album || 'Senza dischettu'}</p>
+                            <p className="text-muted text-xs">{count} canzona{count > 1 ? '/canzoni' : ''} senza paroddi</p>
                           </div>
                           <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                         </button>
@@ -659,11 +659,11 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                       {albumSongs.map(song => (
                         <div key={song.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
                           <div className="flex-1 min-w-0">
-                            {song.numero && <p className="text-muted text-xs">Piste {song.numero}</p>}
+                            {song.numero && <p className="text-muted text-xs">Canzona {song.numero}</p>}
                             <p className="text-text text-sm font-medium truncate">{song.titre}</p>
                             <p className="text-muted text-xs">{song.annee || ''}</p>
                           </div>
-                          <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full flex-shrink-0">Sans paroles</span>
+                          <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full flex-shrink-0">Senza paroddi</span>
                           <button onClick={() => { startEdit(song as any); setTab('add') }} className="p-1.5 flex-shrink-0">
                             <Pencil className="w-4 h-4 text-accent" />
                           </button>
@@ -688,15 +688,15 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                 className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
                 <ChevronLeft className="w-4 h-4 text-text" />
               </button>
-              <h2 className="font-display font-semibold text-text">{editSong ? 'Modifier la chanson' : 'Nouvelle chanson'}</h2>
+              <h2 className="font-display font-semibold text-text">{editSong ? 'Scambià a canzona' : 'Nova canzona'}</h2>
             </div>
             <div className="space-y-3">
               <div className="relative">
-                <label className="text-text-muted text-xs mb-1.5 block">Artiste *</label>
+                <label className="text-text-muted text-xs mb-1.5 block">Artistu *</label>
                 <input type="text" value={form.artiste}
                   onChange={(e) => { setForm((f) => ({ ...f, artiste: e.target.value })); searchArtists(e.target.value); setShowArtistSug(true) }}
                   onBlur={() => setTimeout(() => setShowArtistSug(false), 150)}
-                  placeholder="Nom de l'artiste"
+                  placeholder="Nomi di l'artistu"
                   className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                 {showArtistSug && artistSuggestions.length > 0 && (
                   <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg">
@@ -710,17 +710,17 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
               <div className="flex gap-3">
                 <div className="w-24 flex-shrink-0">
-                  <label className="text-text-muted text-xs mb-1.5 block">Annee</label>
+                  <label className="text-text-muted text-xs mb-1.5 block">Annata</label>
                   <input type="number" inputMode="numeric" value={form.annee}
                     onChange={(e) => setForm((f) => ({ ...f, annee: e.target.value }))} placeholder="2024"
                     className="w-full px-3 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                 </div>
                 <div className="flex-1 relative">
-                  <label className="text-text-muted text-xs mb-1.5 block">Album</label>
+                  <label className="text-text-muted text-xs mb-1.5 block">Dischettu</label>
                   <input type="text" value={form.album}
                     onChange={(e) => { setForm((f) => ({ ...f, album: e.target.value })); searchAlbums(e.target.value, form.artiste); setShowAlbumSug(true) }}
                     onBlur={() => setTimeout(() => setShowAlbumSug(false), 150)}
-                    placeholder="Nom de l'album"
+                    placeholder="Nomi di u dischettu"
                     className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                   {showAlbumSug && albumSuggestions.length > 0 && (
                     <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg">
@@ -736,34 +736,39 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               {editSong ? (
                 <div className="flex gap-3">
                   <div className="w-20 flex-shrink-0">
-                    <label className="text-text-muted text-xs mb-1.5 block">N°</label>
+                    <label className="text-text-muted text-xs mb-1.5 block">Nº</label>
                     <input type="number" inputMode="numeric" value={form.numero}
                       onChange={(e) => setForm((f) => ({ ...f, numero: e.target.value }))} placeholder="1"
                       className="w-full px-3 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                   </div>
                   <div className="flex-1">
-                    <label className="text-text-muted text-xs mb-1.5 block">Titre *</label>
+                    <label className="text-text-muted text-xs mb-1.5 block">Titulu *</label>
                     <input type="text" value={form.titre}
-                      onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} placeholder="Titre de la chanson"
+                      onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} placeholder="Titulu di a canzona"
                       className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                   </div>
                 </div>
               ) : (
                 <>
+                  <button onClick={addTrackRow}
+                    className="w-full py-2.5 rounded-xl border border-dashed border-border text-accent text-sm font-medium flex items-center justify-center gap-1.5">
+                    <Plus className="w-4 h-4" />
+                    Aghjunghja un'altra canzona
+                  </button>
                   {tracks.map((t, i) => (
                     <div key={i} className="flex gap-3 items-end">
                       <div className="w-20 flex-shrink-0">
-                        {i === 0 && <label className="text-text-muted text-xs mb-1.5 block">N°</label>}
+                        {i === 0 && <label className="text-text-muted text-xs mb-1.5 block">Nº</label>}
                         <input type="number" inputMode="numeric" value={t.numero}
                           onChange={(e) => setTracks(ts => ts.map((tt, ti) => ti === i ? { ...tt, numero: e.target.value } : tt))}
                           placeholder="1"
                           className="w-full px-3 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                       </div>
                       <div className="flex-1">
-                        {i === 0 && <label className="text-text-muted text-xs mb-1.5 block">Titre *</label>}
+                        {i === 0 && <label className="text-text-muted text-xs mb-1.5 block">Titulu *</label>}
                         <input type="text" value={t.titre}
                           onChange={(e) => setTracks(ts => ts.map((tt, ti) => ti === i ? { ...tt, titre: e.target.value } : tt))}
-                          placeholder="Titre de la chanson"
+                          placeholder="Titulu di a canzona"
                           className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors" />
                       </div>
                       {tracks.length > 1 && (
@@ -773,11 +778,6 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                       )}
                     </div>
                   ))}
-                  <button onClick={addTrackRow}
-                    className="w-full py-2.5 rounded-xl border border-dashed border-border text-accent text-sm font-medium flex items-center justify-center gap-1.5">
-                    <Plus className="w-4 h-4" />
-                    Ajouter une autre chanson
-                  </button>
                 </>
               )}
 
@@ -785,7 +785,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                 <div>
                   <label className="text-text-muted text-xs mb-1.5 block">Paroles</label>
                   <textarea value={form.paroles} onChange={(e) => setForm((f) => ({ ...f, paroles: e.target.value }))}
-                    placeholder="Coller les paroles ici..." rows={10}
+                    placeholder="Mittiti i paroddi quì…" rows={10}
                     className="w-full px-4 py-3 rounded-xl bg-card border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent transition-colors resize-none" />
                 </div>
               )}
@@ -798,9 +798,9 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             <button onClick={handleSave} disabled={!form.artiste.trim() || (editSong ? !form.titre.trim() : tracks.some(t => !t.titre.trim())) || saving}
               className="mt-4 w-full py-3.5 rounded-xl accent-gradient text-white font-display font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
               {saving && <Loader className="w-4 h-4 animate-spin" />}
-              {editSong ? 'Enregistrer les modifications' : tracks.length > 1 ? `Ajouter ${tracks.length} chansons` : 'Ajouter la chanson'}
+              {editSong ? 'Arrigistrà i scambiamenti' : tracks.length > 1 ? `Aghjunghja ${tracks.length} canzoni` : 'Aghjunghja a canzona'}
             </button>
-            {!editSong && <p className="text-center text-text-muted text-xs mt-3">Le formulaire se videra après ajout</p>}
+            {!editSong && <p className="text-center text-text-muted text-xs mt-3">U furmulariu si biutarà dopu à l'aghjunta</p>}
           </div>
         )}
 
@@ -811,13 +811,13 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               <input
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Artiste, album ou titre..."
+                placeholder="Artistu, dischettu o titulu…"
                 className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted"
               />
             </div>
 
             {!search.trim() && (
-              <p className="text-center text-muted py-10 text-sm px-4">Tapez pour chercher une chanson, un album ou un artiste. Cherchez un nom d'artiste ou d'album pour faire apparaître toutes ses chansons d'un coup, sélectionnez-les, puis supprimez-les ou modifiez-les en une fois.</p>
+              <p className="text-center text-muted py-10 text-sm px-4">Scriviti pà ricircà una canzona, un dischettu o un artistu. Ricircheti un nomi d'artistu o di dischettu pà fà appariscia tutti i so canzoni subitu, silizziuneti li, po sguasseti li o cambieti li tutti insemi.</p>
             )}
 
             {search.trim() && loading && (
@@ -826,7 +826,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
             {search.trim() && !loading && (
               songs.length === 0 ? (
-                <p className="text-center text-muted py-10">Aucun résultat</p>
+                <p className="text-center text-muted py-10">Nisunu risultatu</p>
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-3 px-1">
@@ -834,36 +834,36 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                       <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.size === songs.length && songs.length > 0 ? 'bg-accent border-accent' : 'border-border'}`}>
                         {selectedIds.size === songs.length && songs.length > 0 && <span className="text-white text-[10px]">✓</span>}
                       </div>
-                      Tout sélectionner ({songs.length})
+                      Silizziunà tuttu ({songs.length})
                     </button>
                     {selectedIds.size > 0 && (
                       <div className="flex items-center gap-2">
                         <button onClick={() => setBulkEditOpen(o => !o)}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium">
                           <Pencil className="w-3.5 h-3.5" />
-                          Modifier ({selectedIds.size})
+                          Scambià ({selectedIds.size})
                         </button>
                         <button onClick={handleBulkDelete} disabled={bulkDeleting}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium">
                           {bulkDeleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                          Supprimer ({selectedIds.size})
+                          Sguassà ({selectedIds.size})
                         </button>
                       </div>
                     )}
                   </div>
                   {bulkEditOpen && selectedIds.size > 0 && (
                     <div className="p-3 rounded-xl bg-card border border-border mb-3 space-y-2">
-                      <p className="text-text-muted text-xs">Laissez un champ vide pour ne pas y toucher. S'applique aux {selectedIds.size} chanson{selectedIds.size > 1 ? 's' : ''} sélectionnée{selectedIds.size > 1 ? 's' : ''}.</p>
-                      <input value={bulkArtiste} onChange={e => setBulkArtiste(e.target.value)} placeholder="Nouveau nom d'artiste"
+                      <p className="text-text-muted text-xs">Lascieti una casedda biota pà ùn tuccalla micca. S'appiica à i {selectedIds.size} canzona{selectedIds.size > 1 ? '/canzoni' : ''} silizziunati.</p>
+                      <input value={bulkArtiste} onChange={e => setBulkArtiste(e.target.value)} placeholder="Novu nomi d'artistu"
                         className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
-                      <input value={bulkAlbum} onChange={e => setBulkAlbum(e.target.value)} placeholder="Nouveau nom d'album"
+                      <input value={bulkAlbum} onChange={e => setBulkAlbum(e.target.value)} placeholder="Novu nomi di dischettu"
                         className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
-                      <input value={bulkAnnee} onChange={e => setBulkAnnee(e.target.value)} placeholder="Nouvelle année" type="number" inputMode="numeric"
+                      <input value={bulkAnnee} onChange={e => setBulkAnnee(e.target.value)} placeholder="Nova annata" type="number" inputMode="numeric"
                         className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
                       <button onClick={handleBulkEdit} disabled={bulkEditing || (!bulkArtiste.trim() && !bulkAlbum.trim() && !bulkAnnee.trim())}
                         className="w-full py-2.5 rounded-lg accent-gradient text-white text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
                         {bulkEditing && <Loader className="w-4 h-4 animate-spin" />}
-                        Appliquer
+                        Applicà
                       </button>
                     </div>
                   )}
@@ -897,27 +897,27 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
         {tab === 'import' && (
           <div className="space-y-4 pb-10">
             <div className="p-3 rounded-xl bg-card border border-border space-y-2">
-              <p className="text-text-muted text-xs">Si le Google Sheet n'est plus à jour (ex : après une erreur de configuration passée), forcez une resynchro complète de toutes les chansons vers le Sheet.</p>
+              <p className="text-text-muted text-xs">Sè u Google Sheet ùn hè più aghjurnatu (pà asempiu, dopu à un arrori di cunfigurazioni passatu), forzeti una risincrunizazioni cumpleta di tutti i canzoni versu u Sheet.</p>
               <button onClick={handleForceSync} disabled={forceSyncing}
                 className="w-full py-2.5 rounded-xl bg-accent/10 text-accent text-sm font-medium flex items-center justify-center gap-2">
                 {forceSyncing && <Loader className="w-4 h-4 animate-spin" />}
-                Forcer la synchro complète
+                Furzà a sincrunizazioni cumpleta
               </button>
               {forceSyncProgress && forceSyncing && (
-                <p className="text-text-muted text-xs text-center">{forceSyncProgress.done} / {forceSyncProgress.total} chansons envoyées...</p>
+                <p className="text-text-muted text-xs text-center">{forceSyncProgress.done} / {forceSyncProgress.total} canzoni mandati…</p>
               )}
               {forceSyncError && <p className="text-red-400 text-xs">{forceSyncError}</p>}
               {!forceSyncing && forceSyncProgress && !forceSyncError && (
-                <p className="text-green-400 text-xs text-center">✅ Synchro terminée ({forceSyncProgress.done} chansons)</p>
+                <p className="text-green-400 text-xs text-center">✅ Sincrunizazioni compia ({forceSyncProgress.done} chansons)</p>
               )}
             </div>
             <div>
-              <h2 className="font-display font-semibold text-text mb-1">Importer un fichier Excel</h2>
-              <p className="text-text-muted text-sm">Toutes les lignes du fichier sont importées, sans suppression de doublons. Utile en secours — les ajouts/modifs faits dans l'appli se répercutent automatiquement sur votre Google Sheet.</p>
+              <h2 className="font-display font-semibold text-text mb-1">Impurtà un schidariu Excel</h2>
+              <p className="text-text-muted text-sm">Tutti i linii di u schidariu sò impurtati, senza sguassà i dopii. Utili in succorsu — l'aghjunti/scambiamenti fatti in l'appii si ricuccani automaticamenti nant'à u vostru Google Sheet.</p>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-xs space-y-1">
-              <p className="text-text-muted font-medium mb-2">Colonnes reconnues :</p>
-              {[['Artiste','Artistu / Artiste'],['Titre','Titulu / Titre'],['Album','Dischettu / Album'],['Annee','Annata / Annee'],['Paroles','Paroddi / Parolle / Paroles']].map(([l,v])=>(
+              <p className="text-text-muted font-medium mb-2">Culonni ricunnisciuti :</p>
+              {[['Artistu','Artistu / Artiste'],['Titulu','Titulu / Titre'],['Dischettu','Dischettu / Album'],['Annata','Annata / Annee'],['Paroddi','Paroddi / Parolle / Paroles']].map(([l,v])=>(
                 <p key={l}><span className="text-muted">{l} : </span><span className="text-accent font-mono">{v}</span></p>
               ))}
             </div>
@@ -927,7 +927,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                 className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-2xl border-2 border-dashed border-border hover:border-accent transition-colors group">
                 <Upload className="w-8 h-8 text-muted group-hover:text-accent transition-colors" />
                 <div className="text-center">
-                  <p className="font-medium text-text">Choisir un fichier</p>
+                  <p className="font-medium text-text">Scedda un schidariu</p>
                   <p className="text-text-muted text-sm">.xlsx, .xls ou .csv</p>
                 </div>
               </button>
@@ -935,18 +935,18 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
             {importStatus.state === 'uploading' && (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card">
                 <Loader className="w-5 h-5 text-accent animate-spin flex-shrink-0" />
-                <p className="text-text text-sm">Import en cours...</p>
+                <p className="text-text text-sm">Impurtazioni in corsu…</p>
               </div>
             )}
             {importStatus.state === 'done' && (
               <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                  <p className="text-green-400 font-semibold">Import terminé !</p>
+                  <p className="text-green-400 font-semibold">Impurtazioni compia !</p>
                 </div>
                 <div className="space-y-1 text-sm">
-                  <p className="text-text-muted">Lignes : <span className="text-text font-medium">{importStatus.total_in_file}</span></p>
-                  <p className="text-text-muted">Importées : <span className="text-green-400 font-medium">{importStatus.inserted}</span></p>
+                  <p className="text-text-muted">Linii : <span className="text-text font-medium">{importStatus.total_in_file}</span></p>
+                  <p className="text-text-muted">Impurtati : <span className="text-green-400 font-medium">{importStatus.inserted}</span></p>
                 </div>
                 {importStatus.errors.map((e, i) => <p key={i} className="text-yellow-400 text-xs">{e}</p>)}
                 <button onClick={() => setImportStatus({ state: 'idle' })}
@@ -960,7 +960,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-red-400 font-semibold text-sm">Erreur</p>
+                    <p className="text-red-400 font-semibold text-sm">Arrori</p>
                     <p className="text-red-400/80 text-xs mt-1">{importStatus.message}</p>
                   </div>
                 </div>

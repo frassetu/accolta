@@ -45,8 +45,8 @@ export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite }:
         ) : songs.length === 0 ? (
           <div className="text-center py-20 text-muted">
             <Trophy className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-text">Aucune consultation pour l'instant</p>
-            <p className="text-sm mt-1">Le classement apparaîtra après avoir consulté des paroles</p>
+            <p className="font-medium text-text">Nisuna cunsultazioni pà avà</p>
+            <p className="text-sm mt-1">A classificazioni si vidarà dopu à cunsultazioni di i paroddi</p>
           </div>
         ) : (
           <div className="space-y-2">

@@ -9,11 +9,11 @@ interface Props {
 }
 
 const tabs = [
-  { id: 'home' as Tab, label: 'Accueil', Icon: Home },
+  { id: 'home' as Tab, label: 'Accolta', Icon: Home },
   { id: 'artists' as Tab, label: 'Artisti', Icon: Music2 },
   { id: 'top100' as Tab, label: 'Top 100', Icon: Trophy },
-  { id: 'favorites' as Tab, label: 'Favoris', Icon: Heart },
-  { id: 'profile' as Tab, label: 'Profil', Icon: User },
+  { id: 'favorites' as Tab, label: 'Favuriti', Icon: Heart },
+  { id: 'profile' as Tab, label: 'Prufilu', Icon: User },
 ]
 
 export default function BottomNav({ activeTab, onChangeTab }: Props) {

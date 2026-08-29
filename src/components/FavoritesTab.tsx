@@ -53,8 +53,8 @@ export default function FavoritesTab({ favorites, onSelectSong, onToggleFavorite
       ) : favorites.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-4xl mb-3">🤍</p>
-          <p className="font-display font-semibold text-text">Pas encore de favoris</p>
-          <p className="text-sm text-text-muted mt-1">Appuyez sur le cœur d'une chanson</p>
+          <p className="font-display font-semibold text-text">Ancu nisunu favuritu</p>
+          <p className="text-sm text-text-muted mt-1">Picchjeti nant'à u cori d'una canzona</p>
         </div>
       ) : (
         <div className="space-y-2 fade-in">

@@ -43,14 +43,14 @@ export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
               <ShieldCheck className="w-5 h-5 text-accent" />
             </div>
             <div className="flex-1">
-              <p className="font-display font-semibold text-text">Espace administrateur</p>
+              <p className="font-display font-semibold text-text">Spaziu amministratori</p>
               <p className="text-text-muted text-sm">
-                {isAdmin ? 'Connecte en tant qu admin' : 'Acces reserve'}
+                {isAdmin ? "Cunnessu cum'è amministratori" : 'Accessu risirvatu'}
               </p>
             </div>
             {isAdmin && (
               <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full font-medium">
-                Admin
+                Amministratori
               </span>
             )}
           </button>
@@ -59,17 +59,17 @@ export default function ProfileTab({ isAdmin, onOpenAdmin }: Props) {
         <div className="p-4 rounded-2xl bg-card border border-border">
           <div className="flex items-center gap-3 mb-3">
             <Info className="w-5 h-5 text-text-muted" />
-            <p className="font-display font-semibold text-text">A propos</p>
+            <p className="font-display font-semibold text-text">À prupositu</p>
           </div>
           <p className="text-text-muted text-sm leading-relaxed">
-            Accolta est une application de paroles de chansons corses.
-            Chaque visiteur peut consulter et mettre en favoris ses chansons preferees.
+            Accolta hè una appiicazioni di paroddi di i canzoni corsi.
+            Ogni visitori pò fighjulà è metta in favuritu i so canzoni favuriti.
           </p>
           <p
             onClick={handleVersionTap}
             className="text-muted text-xs mt-3 select-none"
           >
-            Version {process.env.NEXT_PUBLIC_BUILD_SHA} · {process.env.NEXT_PUBLIC_BUILD_DATE}
+            Versioni {process.env.NEXT_PUBLIC_BUILD_SHA} · {process.env.NEXT_PUBLIC_BUILD_DATE}
           </p>
         </div>
       </div>

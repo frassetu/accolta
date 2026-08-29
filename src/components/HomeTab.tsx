@@ -41,7 +41,7 @@ export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onG
         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        Ricercà un artista, un titulu, una parola…
+        Ricircà un artistu, un titulu, una parodda…
       </button>
 
       {loading ? (
@@ -50,10 +50,10 @@ export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onG
         </div>
       ) : (
         <section>
-          <h2 className="font-display font-semibold text-text mb-3">Récents</h2>
+          <h2 className="font-display font-semibold text-text mb-3">Paroddi novi</h2>
           <div className="space-y-2">
             {recent.length === 0 ? (
-              <p className="text-text-muted text-sm py-4 text-center">Aucune chanson</p>
+              <p className="text-text-muted text-sm py-4 text-center">Nisuna canzona</p>
             ) : (
               recent.map(song => (
                 <SongCard

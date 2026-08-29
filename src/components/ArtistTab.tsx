@@ -106,7 +106,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
               </button>
               <div className="min-w-0">
                 <h2 className="font-display font-bold text-text truncate">{selectedArtist}</h2>
-                <p className="text-muted text-xs">{artistAlbums.length} album{artistAlbums.length > 1 ? 's' : ''}</p>
+                <p className="text-muted text-xs">{artistAlbums.length} dischettu{artistAlbums.length > 1 ? '/dischetti' : ''}</p>
               </div>
             </div>
           ) : view === 'songs' && selectedArtist && selectedAlbum ? (
@@ -117,7 +117,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
               </button>
               <div className="min-w-0">
                 <p className="text-muted text-xs">{selectedArtist}</p>
-                <h2 className="font-display font-bold text-text truncate">{selectedAlbum || 'Sans album'}</h2>
+                <h2 className="font-display font-bold text-text truncate">{selectedAlbum || 'Senza dischettu'}</h2>
               </div>
             </div>
           ) : null}
@@ -135,9 +135,9 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
         {/* ARTISTES LIST */}
         {!loading && view === 'list' && (
           <div className="relative pr-6">
-            <p className="text-xs text-muted mb-3">{artists.length} artistes</p>
+            <p className="text-xs text-muted mb-3">{artists.length} artisti</p>
             {artists.length === 0 && (
-              <p className="text-center text-muted py-10">Aucun artiste trouvé</p>
+              <p className="text-center text-muted py-10">Nisunu artistu trovu</p>
             )}
             {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([letter, group]) => (
               <div key={letter} ref={el => { letterRefs.current[letter] = el }} style={{ scrollMarginTop: '70px' }}>
@@ -156,7 +156,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
                         <div className="flex-1 min-w-0">
                           <p className="text-text font-medium text-sm truncate">{artist.name}</p>
                           <p className="text-muted text-xs">
-                            {artist.count} chanson{artist.count > 1 ? 's' : ''}
+                            {artist.count} canzona{artist.count > 1 ? '/canzoni' : ''}
                             {artist.albums.length > 0 ? ` · ${artist.albums.length} album${artist.albums.length > 1 ? 's' : ''}` : ''}
                           </p>
                         </div>
@@ -202,8 +202,8 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
                     <Music2 className="w-5 h-5 text-muted" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-text font-medium text-sm truncate">{annee ? `${annee} - ${album || 'Sans album'}` : (album || 'Sans album')}</p>
-                    <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
+                    <p className="text-text font-medium text-sm truncate">{annee ? `${annee} - ${album || 'Senza dischettu'}` : (album || 'Senza dischettu')}</p>
+                    <p className="text-muted text-xs">{count} canzona{count > 1 ? '/canzoni' : ''}</p>
                   </div>
                   <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                 </button>
