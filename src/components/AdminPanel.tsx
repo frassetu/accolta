@@ -160,7 +160,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`Sguassà ${selectedIds.size} canzona${selectedIds.size > 1 ? '/canzoni' : ''} ? St'azzioni ùn si pò micca canciddà.`)) return
+    if (!confirm(`Sguassà ${selectedIds.size} ${selectedIds.size > 1 ? 'canzoni' : 'canzona'} ? St'azzioni ùn si pò micca canciddà.`)) return
     setBulkDeleting(true)
     const results = await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/admin?id=${id}`, { method: 'DELETE' })))
     setBulkDeleting(false)
@@ -604,7 +604,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
               <>
                 {missingView === 'artists' && (
                   <div className="space-y-2 pb-10">
-                    <p className="text-xs text-muted mb-3">{missingArtists.length} artistu{missingArtists.length > 1 ? '/artisti' : ''} cù paroddi mancanti</p>
+                    <p className="text-xs text-muted mb-3">{missingArtists.length} {missingArtists.length > 1 ? 'artisti' : 'artistu'} cù paroddi mancanti</p>
                     {missingArtists.length === 0 && (
                       <p className="text-center text-muted py-8">Tutti i paroddi sò cumpleti 🎉</p>
                     )}
@@ -614,7 +614,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors text-left">
                         <div className="flex-1 min-w-0">
                           <p className="text-text text-sm font-medium truncate">{artist.name}</p>
-                          <p className="text-muted text-xs">{artist.count} canzona{artist.count > 1 ? '/canzoni' : ''} senza paroddi</p>
+                          <p className="text-muted text-xs">{artist.count} {artist.count > 1 ? 'canzoni' : 'canzona'} senza paroddi</p>
                         </div>
                         <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                       </button>
@@ -641,7 +641,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-text font-medium text-sm truncate">{album || 'Senza dischettu'}</p>
-                            <p className="text-muted text-xs">{count} canzona{count > 1 ? '/canzoni' : ''} senza paroddi</p>
+                            <p className="text-muted text-xs">{count} {count > 1 ? 'canzoni' : 'canzona'} senza paroddi</p>
                           </div>
                           <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                         </button>
@@ -853,7 +853,7 @@ export default function AdminPanel({ isAdmin, onLogin, onLogout, onClose }: Prop
                   </div>
                   {bulkEditOpen && selectedIds.size > 0 && (
                     <div className="p-3 rounded-xl bg-card border border-border mb-3 space-y-2">
-                      <p className="text-text-muted text-xs">Lascieti una casedda biota pà ùn tuccalla micca. S'appiica à i {selectedIds.size} canzona{selectedIds.size > 1 ? '/canzoni' : ''} silizziunati.</p>
+                      <p className="text-text-muted text-xs">Lascieti una casedda biota pà ùn tuccalla micca. S'appiica à i {selectedIds.size} {selectedIds.size > 1 ? 'canzoni' : 'canzona'} silizziunati.</p>
                       <input value={bulkArtiste} onChange={e => setBulkArtiste(e.target.value)} placeholder="Novu nomi d'artistu"
                         className="w-full px-3 py-2 rounded-lg bg-bg border border-border text-text text-sm outline-none placeholder:text-muted focus:border-accent" />
                       <input value={bulkAlbum} onChange={e => setBulkAlbum(e.target.value)} placeholder="Novu nomi di dischettu"

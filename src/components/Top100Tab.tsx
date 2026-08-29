@@ -60,7 +60,7 @@ export default function Top100Tab({ favorites, onSelectSong, onToggleFavorite }:
                   onToggleFavorite={() => onToggleFavorite(song.id)}
                 />
                 <span className="absolute right-12 top-1/2 -translate-y-1/2 text-xs text-muted">
-                  {count} vue{count > 1 ? 's' : ''}
+                  {count} {count > 1 ? 'visti' : 'vista'}
                 </span>
               </div>
             ))}

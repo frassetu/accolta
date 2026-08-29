@@ -168,7 +168,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-text font-medium text-sm truncate">{name}</p>
-                        <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
+                        <p className="text-muted text-xs">{count} {count > 1 ? 'canzoni' : 'canzona'}</p>
                       </div>
                       <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                     </button>
@@ -229,7 +229,7 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-text font-medium text-sm truncate">{album || 'Senza dischettu'}</p>
-                  <p className="text-muted text-xs">{count} chanson{count > 1 ? 's' : ''}</p>
+                  <p className="text-muted text-xs">{count} {count > 1 ? 'canzoni' : 'canzona'}</p>
                 </div>
                 <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
               </button>

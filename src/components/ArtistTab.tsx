@@ -106,7 +106,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
               </button>
               <div className="min-w-0">
                 <h2 className="font-display font-bold text-text truncate">{selectedArtist}</h2>
-                <p className="text-muted text-xs">{artistAlbums.length} dischettu{artistAlbums.length > 1 ? '/dischetti' : ''}</p>
+                <p className="text-muted text-xs">{artistAlbums.length} {artistAlbums.length > 1 ? 'dischetti' : 'dischettu'}</p>
               </div>
             </div>
           ) : view === 'songs' && selectedArtist && selectedAlbum ? (
@@ -156,8 +156,8 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
                         <div className="flex-1 min-w-0">
                           <p className="text-text font-medium text-sm truncate">{artist.name}</p>
                           <p className="text-muted text-xs">
-                            {artist.count} canzona{artist.count > 1 ? '/canzoni' : ''}
-                            {artist.albums.length > 0 ? ` · ${artist.albums.length} album${artist.albums.length > 1 ? 's' : ''}` : ''}
+                            {artist.count} {artist.count > 1 ? 'canzoni' : 'canzona'}
+                            {artist.albums.length > 0 ? ` · ${artist.albums.length} ${artist.albums.length > 1 ? 'dischetti' : 'dischettu'}` : ''}
                           </p>
                         </div>
                         <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
@@ -203,7 +203,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-text font-medium text-sm truncate">{annee ? `${annee} - ${album || 'Senza dischettu'}` : (album || 'Senza dischettu')}</p>
-                    <p className="text-muted text-xs">{count} canzona{count > 1 ? '/canzoni' : ''}</p>
+                    <p className="text-muted text-xs">{count} {count > 1 ? 'canzoni' : 'canzona'}</p>
                   </div>
                   <ChevronLeft className="w-4 h-4 text-muted rotate-180 flex-shrink-0" />
                 </button>
