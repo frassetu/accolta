@@ -88,8 +88,8 @@ export default function App() {
     search: undefined,
     artists: 'Artisti',
     top100: 'Top 100',
-    favorites: 'Mes favoris',
-    profile: 'Profil',
+    favorites: 'I me favuriti',
+    profile: 'Prufilu',
   }
 
   return (
