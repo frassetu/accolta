@@ -19,6 +19,11 @@ export function normalize(str: string | null | undefined): string {
   return str
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    // Retire toutes les apostrophes (droite, typographiques, accent grave/aigu
+    // utilisé comme apostrophe) : évite qu'une différence de frappe entre
+    // l'utilisateur et les données stockées (ex: "L'Indianu") fasse échouer
+    // une recherche qui devrait pourtant trouver la chanson.
+    .replace(/[\u2018\u2019\u02BC\u0060\u00B4']/g, '')
     .toLowerCase()
 }
 
