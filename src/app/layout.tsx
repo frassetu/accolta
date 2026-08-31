@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'black',
     title: 'Vogliu Cantà !',
   },
   icons: {
@@ -33,7 +33,7 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
 
         {/* Écrans de lancement iOS : évite le flash blanc/noir natif avant
