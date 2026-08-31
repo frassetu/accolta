@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   if (action === 'stats') {
     const { count: total } = await supabase.from('chansons').select('*', { count: 'exact', head: true })
     const { count: withLyrics } = await supabase.from('chansons').select('*', { count: 'exact', head: true }).not('paroles', 'is', null).neq('paroles', '')
-    const { data: artistData } = await supabase.from('chansons').select('artiste')
+    const { data: artistData } = await supabase.from('chansons').select('artiste').not('paroles', 'is', null).neq('paroles', '')
     const artists = new Set(artistData?.map((r: any) => r.artiste)).size
     return NextResponse.json({ total, withLyrics, artists })
   }
