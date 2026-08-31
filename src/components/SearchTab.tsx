@@ -67,7 +67,18 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
 
   const titleMatches = useMemo(() => {
     if (!nq) return []
-    return allSongs.filter(s => s._nTitre.includes(nq) || s._nAlbum.includes(nq))
+    const matches = allSongs.filter(s => s._nTitre.includes(nq) || s._nAlbum.includes(nq))
+    // Priorité : titre exact > titre qui commence par la recherche > titre
+    // qui contient la recherche > chanson trouvée seulement via le nom de
+    // l'album (sinon une chanson dont le titre correspond exactement se
+    // retrouvait noyée au milieu de tout un album portant le même nom).
+    const score = (s: NormSong) => {
+      if (s._nTitre === nq) return 0
+      if (s._nTitre.startsWith(nq)) return 1
+      if (s._nTitre.includes(nq)) return 2
+      return 3
+    }
+    return [...matches].sort((a, b) => score(a) - score(b))
   }, [allSongs, nq])
 
   const lyricsMatches = useMemo(() => {
