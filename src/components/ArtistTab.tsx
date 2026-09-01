@@ -7,13 +7,14 @@ import { getAllSongs } from '@/lib/songs'
 import { getColor, getInitials } from '@/lib/format'
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack'
 import SongCard from './SongCard'
-
-type View = 'list' | 'albums' | 'songs'
+import { ArtistState } from '@/app/page'
 
 interface Props {
   favorites: number[]
   onSelectSong: (s: Song, playlist?: Song[]) => void
   onToggleFavorite: (id: number) => void
+  artistState: ArtistState
+  onArtistStateChange: (s: ArtistState) => void
 }
 
 interface ArtistInfo {
@@ -25,15 +26,14 @@ interface ArtistInfo {
 // Alphabet corse : on exclut J, K, W, X, Y
 const CORSU_ALPHABET = 'ABCDEFGHILMNOPQRSTUVZ'.split('')
 
-export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }: Props) {
+export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite, artistState, onArtistStateChange }: Props) {
   const [artists, setArtists] = useState<ArtistInfo[]>([])
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<View>('list')
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(null)
-  const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const letterRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  const { view, selectedArtist, selectedAlbum } = artistState
 
   useEffect(() => {
     const load = async () => {
@@ -68,8 +68,8 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
 
   // Retour d'un niveau : chansons -> albums -> liste des artistes.
   const goBack = () => {
-    if (view === 'songs') { setView('albums'); setSelectedAlbum(null) }
-    else if (view === 'albums') { setView('list'); setSelectedArtist(null) }
+    if (view === 'songs') onArtistStateChange({ view: 'albums', selectedArtist, selectedAlbum: null })
+    else if (view === 'albums') onArtistStateChange({ view: 'list', selectedArtist: null, selectedAlbum: null })
   }
   const swipeBack = useEdgeSwipeBack(goBack)
 
@@ -100,7 +100,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
         <div className="sticky top-[60px] px-4 pt-3 pb-3 border-b border-border bg-bg z-30">
           {view === 'albums' && selectedArtist ? (
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView('list'); setSelectedArtist(null) }}
+              <button onClick={() => onArtistStateChange({ view: 'list', selectedArtist: null, selectedAlbum: null })}
                 className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
                 <ChevronLeft className="w-5 h-5 text-text" />
               </button>
@@ -111,7 +111,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
             </div>
           ) : view === 'songs' && selectedArtist && selectedAlbum ? (
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView('albums'); setSelectedAlbum(null) }}
+              <button onClick={() => onArtistStateChange({ view: 'albums', selectedArtist, selectedAlbum: null })}
                 className="w-8 h-8 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
                 <ChevronLeft className="w-5 h-5 text-text" />
               </button>
@@ -147,7 +147,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
                     const color = getColor(artist.name)
                     return (
                       <button key={artist.name}
-                        onClick={() => { setSelectedArtist(artist.name); setView('albums') }}
+                        onClick={() => onArtistStateChange({ view: 'albums', selectedArtist: artist.name, selectedAlbum: null })}
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors text-left">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ background: `${color}22`, border: `1.5px solid ${color}44`, color }}>
@@ -196,7 +196,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite }:
               const count = allSongs.filter(s => s.artiste === selectedArtist && s.album === album && s.paroles && s.paroles.trim()).length
               return (
                 <button key={album}
-                  onClick={() => { setSelectedAlbum(album); setView('songs') }}
+                  onClick={() => onArtistStateChange({ view: 'songs', selectedArtist, selectedAlbum: album })}
                   className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-border transition-colors text-left">
                   <div className="w-10 h-10 rounded-xl bg-border flex items-center justify-center flex-shrink-0">
                     <Music2 className="w-5 h-5 text-muted" />

@@ -18,6 +18,8 @@ interface Props {
   onPrev: () => void
   onNext: () => void
   highlightQuery?: string
+  onGoToArtist?: (artiste: string) => void
+  onGoToAlbum?: (artiste: string, album: string | null) => void
 }
 
 type ModalType = 'report' | 'propose' | 'edit' | null
@@ -55,7 +57,7 @@ function renderParoles(text: string, highlightQuery?: string) {
   return nodes
 }
 
-export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack, isAdmin, hasPrev, hasNext, onPrev, onNext, highlightQuery }: Props) {
+export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack, isAdmin, hasPrev, hasNext, onPrev, onNext, highlightQuery, onGoToArtist, onGoToAlbum }: Props) {
   const [fontSize, setFontSize] = useState(16)
   const [modal, setModal] = useState<ModalType>(null)
   const [modalText, setModalText] = useState('')
@@ -185,11 +187,26 @@ export default function SongDetail({ song, isFavorite, onToggleFavorite, onBack,
             <ChevronLeft className="w-5 h-5 text-text" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-text-muted text-xs truncate">{currentSong.artiste}</p>
+            {onGoToArtist ? (
+              <button onClick={() => onGoToArtist(currentSong.artiste)}
+                className="text-accent text-xs underline truncate text-left block max-w-full">
+                {currentSong.artiste}
+              </button>
+            ) : (
+              <p className="text-text-muted text-xs truncate">{currentSong.artiste}</p>
+            )}
             <h1 className="text-text font-bold text-lg leading-tight truncate">{currentSong.titre}</h1>
             <p className="text-text-muted text-xs truncate">
               {(currentSong as any).numero ? `N°${(currentSong as any).numero} · ` : ''}
-              {currentSong.album}{currentSong.annee ? ` · ${currentSong.annee}` : ''}
+              {currentSong.album && onGoToAlbum ? (
+                <button onClick={() => onGoToAlbum(currentSong.artiste, currentSong.album)}
+                  className="text-accent underline">
+                  {currentSong.album}
+                </button>
+              ) : (
+                currentSong.album
+              )}
+              {currentSong.annee ? ` · ${currentSong.annee}` : ''}
             </p>
           </div>
           <button onClick={onToggleFavorite} className="p-1 flex-shrink-0">
