@@ -128,7 +128,66 @@ export default function App() {
     <>
       {showSplash && <Splash onFinish={() => setShowSplash(false)} />}
 
-      {showAdmin ? (
+      {/* Les deux "modes" (appli normale / admin) restent montés en
+          permanence, on bascule juste leur visibilité en CSS — sinon
+          fermer puis rouvrir l'admin (ou changer d'onglet) faisait tout
+          redémarrer à zéro (onglet admin, position de recherche, etc.). */}
+      <div className={showAdmin ? 'hidden' : ''}>
+        <TopBar title={pageTitles[activeTab]} />
+        <div className="flex flex-col min-h-screen bg-bg">
+          <div className="flex-1 pt-[60px] pb-20">
+            <div className={activeTab === 'home' ? '' : 'hidden'}>
+              <HomeTab
+                favorites={favorites}
+                onSelectSong={handleSelectSong}
+                onToggleFavorite={toggleFavorite}
+                onGoToSearch={() => setActiveTab('search')}
+              />
+            </div>
+            <div className={activeTab === 'search' ? '' : 'hidden'}>
+              <SearchTab
+                favorites={favorites}
+                onSelectSong={handleSelectSong}
+                onToggleFavorite={toggleFavorite}
+                searchState={searchState}
+                onSearchStateChange={setSearchState}
+                active={activeTab === 'search' && !showAdmin}
+              />
+            </div>
+            <div className={activeTab === 'artists' ? '' : 'hidden'}>
+              <ArtistTab
+                favorites={favorites}
+                onSelectSong={handleSelectSong}
+                onToggleFavorite={toggleFavorite}
+                artistState={artistState}
+                onArtistStateChange={setArtistState}
+              />
+            </div>
+            <div className={activeTab === 'top100' ? '' : 'hidden'}>
+              <Top100Tab
+                favorites={favorites}
+                onSelectSong={handleSelectSong}
+                onToggleFavorite={toggleFavorite}
+              />
+            </div>
+            <div className={activeTab === 'favorites' ? '' : 'hidden'}>
+              <FavoritesTab
+                favorites={favorites}
+                onSelectSong={handleSelectSong}
+                onToggleFavorite={toggleFavorite}
+              />
+            </div>
+            <div className={activeTab === 'profile' ? '' : 'hidden'}>
+              <ProfileTab
+                isAdmin={isAdmin}
+                onOpenAdmin={() => setShowAdmin(true)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={showAdmin ? '' : 'hidden'}>
         <AdminPanel
           onClose={() => setShowAdmin(false)}
           isAdmin={isAdmin}
@@ -141,61 +200,7 @@ export default function App() {
             sessionStorage.removeItem('accolta_admin')
           }}
         />
-      ) : (
-        <>
-          <TopBar title={pageTitles[activeTab]} />
-          <div className="flex flex-col min-h-screen bg-bg">
-            <div className="flex-1 pt-[60px] pb-20">
-              {activeTab === 'home' && (
-                <HomeTab
-                  favorites={favorites}
-                  onSelectSong={handleSelectSong}
-                  onToggleFavorite={toggleFavorite}
-                  onGoToSearch={() => setActiveTab('search')}
-                />
-              )}
-              {activeTab === 'search' && (
-                <SearchTab
-                  favorites={favorites}
-                  onSelectSong={handleSelectSong}
-                  onToggleFavorite={toggleFavorite}
-                  searchState={searchState}
-                  onSearchStateChange={setSearchState}
-                />
-              )}
-              {activeTab === 'artists' && (
-                <ArtistTab
-                  favorites={favorites}
-                  onSelectSong={handleSelectSong}
-                  onToggleFavorite={toggleFavorite}
-                  artistState={artistState}
-                  onArtistStateChange={setArtistState}
-                />
-              )}
-              {activeTab === 'top100' && (
-                <Top100Tab
-                  favorites={favorites}
-                  onSelectSong={handleSelectSong}
-                  onToggleFavorite={toggleFavorite}
-                />
-              )}
-              {activeTab === 'favorites' && (
-                <FavoritesTab
-                  favorites={favorites}
-                  onSelectSong={handleSelectSong}
-                  onToggleFavorite={toggleFavorite}
-                />
-              )}
-              {activeTab === 'profile' && (
-                <ProfileTab
-                  isAdmin={isAdmin}
-                  onOpenAdmin={() => setShowAdmin(true)}
-                />
-              )}
-            </div>
-          </div>
-        </>
-      )}
+      </div>
 
       {/* Toujours affiché, y compris en admin — un appui referme l'admin et
           bascule directement sur l'onglet choisi. */}
