@@ -14,11 +14,12 @@ interface Props {
   onToggleFavorite: (id: number) => void
   searchState: SearchState
   onSearchStateChange: (s: SearchState) => void
+  active?: boolean
 }
 
 type NormSong = Song & { _nArtiste: string; _nTitre: string; _nAlbum: string; _nParoles: string }
 
-export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, searchState, onSearchStateChange }: Props) {
+export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, searchState, onSearchStateChange, active }: Props) {
   const [allSongs, setAllSongs] = useState<NormSong[]>([])
   const [loading, setLoading] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -30,9 +31,12 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
       .filter(s => s.artiste === song.artiste && s.album === song.album)
       .sort((a, b) => (a.numero || 999) - (b.numero || 999))
 
+  // Ne focalise le champ que lorsque cet onglet devient réellement actif
+  // (le composant restant désormais monté en permanence en arrière-plan,
+  // sinon le clavier apparaissait dès le lancement de l'appli).
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    if (active) inputRef.current?.focus()
+  }, [active])
 
   useEffect(() => {
     let cancelled = false
