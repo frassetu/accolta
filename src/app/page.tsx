@@ -23,6 +23,12 @@ export type SearchState = {
   selectedAlbum: string | null
 }
 
+export type ArtistState = {
+  view: 'list' | 'albums' | 'songs'
+  selectedArtist: string | null
+  selectedAlbum: string | null
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
@@ -35,6 +41,11 @@ export default function App() {
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
     view: 'artists',
+    selectedArtist: null,
+    selectedAlbum: null,
+  })
+  const [artistState, setArtistState] = useState<ArtistState>({
+    view: 'list',
     selectedArtist: null,
     selectedAlbum: null,
   })
@@ -81,7 +92,28 @@ export default function App() {
     if (idx < songHistory.length - 1) setSelectedSong(songHistory[idx + 1])
   }
 
+  // Depuis la page paroles : aller voir tous les albums de cet artiste.
+  const handleGoToArtist = (artiste: string) => {
+    setArtistState({ view: 'albums', selectedArtist: artiste, selectedAlbum: null })
+    setActiveTab('artists')
+    setSelectedSong(null)
+    setHighlightQuery('')
+  }
+
+  // Depuis la page paroles : aller voir toutes les chansons de cet album.
+  const handleGoToAlbum = (artiste: string, album: string | null) => {
+    setArtistState({ view: 'songs', selectedArtist: artiste, selectedAlbum: album })
+    setActiveTab('artists')
+    setSelectedSong(null)
+    setHighlightQuery('')
+  }
+
   const selectedIdx = selectedSong ? songHistory.findIndex(s => s.id === selectedSong.id) : -1
+
+  const handleChangeTab = (tab: Tab) => {
+    setShowAdmin(false)
+    setActiveTab(tab)
+  }
 
   const pageTitles: Record<Tab, string | undefined> = {
     home: undefined,
@@ -136,6 +168,8 @@ export default function App() {
                   favorites={favorites}
                   onSelectSong={handleSelectSong}
                   onToggleFavorite={toggleFavorite}
+                  artistState={artistState}
+                  onArtistStateChange={setArtistState}
                 />
               )}
               {activeTab === 'top100' && (
@@ -159,29 +193,34 @@ export default function App() {
                 />
               )}
             </div>
-            <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
           </div>
-
-          {/* Vue paroles affichée en surimpression : les onglets restent montés
-              en dessous, ce qui préserve l'état de navigation (recherche, artiste,
-              album…) quand on revient en arrière depuis les paroles. */}
-          {selectedSong && (
-            <div className="fixed inset-0 z-[60] overflow-y-auto bg-bg">
-              <SongDetail
-                song={selectedSong}
-                isFavorite={favorites.includes(selectedSong.id)}
-                onToggleFavorite={() => toggleFavorite(selectedSong.id)}
-                onBack={() => { setSelectedSong(null); setHighlightQuery('') }}
-                isAdmin={isAdmin}
-                hasPrev={selectedIdx > 0}
-                hasNext={selectedIdx >= 0 && selectedIdx < songHistory.length - 1}
-                onPrev={handlePrevSong}
-                onNext={handleNextSong}
-                highlightQuery={highlightQuery}
-              />
-            </div>
-          )}
         </>
+      )}
+
+      {/* Toujours affiché, y compris en admin — un appui referme l'admin et
+          bascule directement sur l'onglet choisi. */}
+      <BottomNav activeTab={activeTab} onChangeTab={handleChangeTab} />
+
+      {/* Vue paroles affichée en surimpression : les onglets restent montés
+          en dessous, ce qui préserve l'état de navigation (recherche, artiste,
+          album…) quand on revient en arrière depuis les paroles. */}
+      {selectedSong && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto bg-bg">
+          <SongDetail
+            song={selectedSong}
+            isFavorite={favorites.includes(selectedSong.id)}
+            onToggleFavorite={() => toggleFavorite(selectedSong.id)}
+            onBack={() => { setSelectedSong(null); setHighlightQuery('') }}
+            isAdmin={isAdmin}
+            hasPrev={selectedIdx > 0}
+            hasNext={selectedIdx >= 0 && selectedIdx < songHistory.length - 1}
+            onPrev={handlePrevSong}
+            onNext={handleNextSong}
+            highlightQuery={highlightQuery}
+            onGoToArtist={handleGoToArtist}
+            onGoToAlbum={handleGoToAlbum}
+          />
+        </div>
       )}
     </>
   )
