@@ -136,7 +136,7 @@ export default function App() {
         <TopBar title={pageTitles[activeTab]} />
         <div className="flex flex-col min-h-screen bg-bg">
           <div className="flex-1 pt-[60px] pb-20">
-            <div className={activeTab === 'home' ? '' : 'hidden'}>
+            <div className={activeTab === 'home' ? 'h-full' : 'hidden'}>
               <HomeTab
                 favorites={favorites}
                 onSelectSong={handleSelectSong}
@@ -144,7 +144,7 @@ export default function App() {
                 onGoToSearch={() => setActiveTab('search')}
               />
             </div>
-            <div className={activeTab === 'search' ? '' : 'hidden'}>
+            <div className={activeTab === 'search' ? 'h-full' : 'hidden'}>
               <SearchTab
                 favorites={favorites}
                 onSelectSong={handleSelectSong}
@@ -154,7 +154,7 @@ export default function App() {
                 active={activeTab === 'search' && !showAdmin}
               />
             </div>
-            <div className={activeTab === 'artists' ? '' : 'hidden'}>
+            <div className={activeTab === 'artists' ? 'h-full' : 'hidden'}>
               <ArtistTab
                 favorites={favorites}
                 onSelectSong={handleSelectSong}
@@ -163,21 +163,21 @@ export default function App() {
                 onArtistStateChange={setArtistState}
               />
             </div>
-            <div className={activeTab === 'top100' ? '' : 'hidden'}>
+            <div className={activeTab === 'top100' ? 'h-full' : 'hidden'}>
               <Top100Tab
                 favorites={favorites}
                 onSelectSong={handleSelectSong}
                 onToggleFavorite={toggleFavorite}
               />
             </div>
-            <div className={activeTab === 'favorites' ? '' : 'hidden'}>
+            <div className={activeTab === 'favorites' ? 'h-full' : 'hidden'}>
               <FavoritesTab
                 favorites={favorites}
                 onSelectSong={handleSelectSong}
                 onToggleFavorite={toggleFavorite}
               />
             </div>
-            <div className={activeTab === 'profile' ? '' : 'hidden'}>
+            <div className={activeTab === 'profile' ? 'h-full' : 'hidden'}>
               <ProfileTab
                 isAdmin={isAdmin}
                 onOpenAdmin={() => setShowAdmin(true)}
