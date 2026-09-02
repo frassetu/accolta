@@ -62,16 +62,16 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
   const artistMatches = useMemo(() => {
     if (!nq) return []
     const names = new Set<string>()
-    allSongs.forEach(s => { if (s._nArtiste.includes(nq)) names.add(s.artiste) })
+    allSongs.forEach(s => { if (s._nArtiste.includes(nq) && s.paroles && s.paroles.trim()) names.add(s.artiste) })
     return Array.from(names).sort().map(name => ({
       name,
-      count: allSongs.filter(s => s.artiste === name).length,
+      count: allSongs.filter(s => s.artiste === name && s.paroles && s.paroles.trim()).length,
     }))
   }, [allSongs, nq])
 
   const titleMatches = useMemo(() => {
     if (!nq) return []
-    const matches = allSongs.filter(s => s._nTitre.includes(nq) || s._nAlbum.includes(nq))
+    const matches = allSongs.filter(s => (s._nTitre.includes(nq) || s._nAlbum.includes(nq)) && s.paroles && s.paroles.trim())
     // Priorité : titre exact > titre qui commence par la recherche > titre
     // qui contient la recherche > chanson trouvée seulement via le nom de
     // l'album (sinon une chanson dont le titre correspond exactement se
@@ -94,11 +94,11 @@ export default function SearchTab({ favorites, onSelectSong, onToggleFavorite, s
   const noResults = nq && artistMatches.length === 0 && titleMatches.length === 0 && lyricsMatches.length === 0
 
   const artistAlbums = selectedArtist
-    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist).map(s => s.album))).sort()
+    ? Array.from(new Set(allSongs.filter(s => s.artiste === selectedArtist && s.paroles && s.paroles.trim()).map(s => s.album))).sort()
     : []
 
   const albumSongs = allSongs
-    .filter(s => s.artiste === selectedArtist && s.album === selectedAlbum)
+    .filter(s => s.artiste === selectedArtist && s.album === selectedAlbum && s.paroles && s.paroles.trim())
     .sort((a, b) => (a.numero || 999) - (b.numero || 999))
 
   const setQuery = (q: string) => onSearchStateChange({ query: q, view: 'artists', selectedArtist: null, selectedAlbum: null })

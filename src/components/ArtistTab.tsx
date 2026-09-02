@@ -94,7 +94,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite, a
     .sort((a, b) => (a.numero || 999) - (b.numero || 999))
 
   return (
-    <div className="flex flex-col bg-bg max-w-lg mx-auto" {...swipeBack}>
+    <div className="flex flex-col min-h-full bg-bg max-w-lg mx-auto" {...swipeBack}>
       {/* Header contextuel : uniquement affiché quand on navigue dans un artiste/album */}
       {view !== 'list' && (
         <div className="sticky top-[60px] px-4 pt-3 pb-3 border-b border-border bg-bg z-30">
