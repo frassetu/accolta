@@ -135,7 +135,7 @@ export default function ArtistTab({ favorites, onSelectSong, onToggleFavorite, a
         {/* ARTISTES LIST */}
         {!loading && view === 'list' && (
           <div className="relative pr-6">
-            <p className="text-xs text-muted mb-3">{artists.length} artisti</p>
+            <p className="text-xs text-muted mb-3">{artists.length} artisti · {artists.reduce((sum, a) => sum + a.count, 0)} canzoni cù paroddi</p>
             {artists.length === 0 && (
               <p className="text-center text-muted py-10">Nisunu artistu trovu</p>
             )}
