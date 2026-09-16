@@ -14,6 +14,7 @@ export type Song = {
   numero: number | null
   paroles: string | null
   created_at: string
+  paroles_updated_at?: string | null
   view_count?: number
 }
 
