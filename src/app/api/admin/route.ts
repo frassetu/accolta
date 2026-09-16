@@ -130,16 +130,28 @@ export async function POST(req: NextRequest) {
   const { action, id, ...fields } = body
 
   if (action === 'upsert') {
-    const { data, error } = await supabase.from('chansons').upsert(fields, { onConflict: 'artiste,titre,album' }).select().single()
+    const hasLyrics = !!(fields.paroles && String(fields.paroles).trim())
+    const insertFields = { ...fields, paroles_updated_at: hasLyrics ? new Date().toISOString() : null }
+    const { data, error } = await supabase.from('chansons').upsert(insertFields, { onConflict: 'artiste,titre,album' }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (data) waitUntil(pushUpsertToSheet(data as any))
     return NextResponse.json({ ok: true })
   }
 
   if (action === 'update') {
-    const { error } = await supabase.from('chansons').update(fields).eq('id', id)
+    // On ne touche à paroles_updated_at que si le contenu des paroles a
+    // réellement changé (pas juste l'année ou l'album) — sinon "Récents"
+    // se remplirait de chansons dont on n'a modifié qu'un détail annexe.
+    const { data: existing } = await supabase.from('chansons').select('paroles').eq('id', id).single()
+    const before = (existing?.paroles || '').trim()
+    const after = (fields.paroles || '').trim()
+    const updateFields: any = { ...fields }
+    if (before !== after) {
+      updateFields.paroles_updated_at = after ? new Date().toISOString() : null
+    }
+    const { error } = await supabase.from('chansons').update(updateFields).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    waitUntil(pushUpsertToSheet({ id, ...fields } as any))
+    waitUntil(pushUpsertToSheet({ id, ...updateFields } as any))
     return NextResponse.json({ ok: true })
   }
 
