@@ -56,10 +56,12 @@ export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onG
         </div>
       ) : (
         <section>
-          <h2 className="font-display font-semibold text-text mb-3">Récents</h2>
+          <p className="text-xs text-muted mb-3">
+            Paroddi novi{recent[0] ? ` · aghjurnatu u ${formatDate(recent[0].paroles_updated_at || recent[0].created_at)}` : ''}
+          </p>
           <div className="space-y-2">
             {recent.length === 0 ? (
-              <p className="text-text-muted text-sm py-4 text-center">Aucune chanson</p>
+              <p className="text-text-muted text-sm py-4 text-center">Nisuna canzona</p>
             ) : (
               recent.map(song => (
                 <SongCard
@@ -68,7 +70,6 @@ export default function HomeTab({ favorites, onSelectSong, onToggleFavorite, onG
                   isFavorite={favorites.includes(song.id)}
                   onSelect={() => onSelectSong(song, recent)}
                   onToggleFavorite={() => onToggleFavorite(song.id)}
-                  subtitle={`${song.artiste} · ${formatDate(song.paroles_updated_at || song.created_at)}`}
                 />
               ))
             )}
